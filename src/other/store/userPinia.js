@@ -7,15 +7,22 @@ export const useUserStore = defineStore('user' , {
         attention: null
     }),
     actions: {
+        initUserStore() {
+            this.user = null;
+            this.attention = null
+        },
         cleanUser() {
             this.user = null;
         },
-        async LoginUser(account , password) {
+        async userLogin(account, password) {
             try {
-                const result = await myrequest.LoginUser(account , password);
-                this.user = result;
+                const result = await myrequest.userLogin(account, password);
+                this.user = result.user;
+                localStorage.setItem("token", result.token);
+                console.log(this.user);
+                console.log(localStorage.getItem("token"))
             }catch (error) {
-                console.log("Error pinia LoginUser: "+error);
+                console.log("Error pinia userLogin: "+error);
             }
         },
         async fetchAttention(id) {

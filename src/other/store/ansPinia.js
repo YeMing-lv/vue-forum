@@ -4,7 +4,7 @@ import myrequest from '../api/request.js';
 export const useAnsStore = defineStore('ans', {
     state: () => ({
         answerList: null,
-        answerIsAgree: [0]
+        answerIsAgree: [0],
     }),
     actions: {
         cleanAnswerList() {
@@ -19,7 +19,6 @@ export const useAnsStore = defineStore('ans', {
         async fetchQueAnswerList(id) {
             const result = await myrequest.fetchQueAnswerList(id);
             this.answerList = result;
-            console.log(this.answerList);
         },
         async updateAnswerLikeNum(upOrdown, id) {
             const result = await myrequest.updateLikeNum('answer', upOrdown, id);

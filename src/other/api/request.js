@@ -13,6 +13,10 @@ apiClient.interceptors.request.use(
         // 发请求前做的一些处理，数据转化，配置请求头，!!设置token,设置loading等，根据需求去添加
 
         //注意使用token的时候需要引入cookie方法或者用本地localStorage等方法，推荐js-cookie
+        const token = localStorage.getItem("token"); // 取token
+        if (token) {
+            config.headers.token = token; // 后端要求把 token 放到 header 请求头中
+        }
 
         return config;
     },
@@ -92,14 +96,18 @@ apiClient.interceptors.response.use(
 export default {
 
     // user用户接口部分
-    async LoginUser(account, password) {
+    async userLogin(account, password) {
         const response = await apiClient.post('/user/login', {
             account,
             password
         });
         return response.data;
     },
-    async RegisterUser(name, account, password) {
+    async checkToken(token) {
+        const response = await apiClient.get(`/user/token`);
+        return response.data;
+    },
+    async userRegister(name, account, password) {
         const response = await apiClient.post('/user/register', {
             name,
             account,

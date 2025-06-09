@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import userService from '../other/api/request';
+import myrequest from '../other/api/request';
 import { useUserStore } from '../other/store/userPinia';
 
 const route = useRoute();
@@ -46,28 +46,31 @@ const handleButton = async (formEl) => {
         if (valid) {
             // console.log(user, 'submit');
             if (isLogOrReg) {
+
                 //提交登录信息
-                userStore.LoginUser(user.account, user.password).then(async () => {
+                userStore.userLogin(user.account, user.password).then(async () => {
+
                     // 获取登录结果的user数据
-                    const fetchUserResult = userStore.user;
-                    if (fetchUserResult != null) {
+                    const fetchLoginResult = userStore.user;
+                    if (fetchLoginResult != null) {
                         //登录成功
-                        localStorage.setItem('isLoggedIn', true);
 
                         //获取用户个人信息外的一些数据
                         //  获取用户的关注关系数据
-                        await userStore.fetchAttention(fetchUserResult.userId);
+                        await userStore.fetchAttention(fetchLoginResult.userId);
 
                         //获取重定向地址，如果没有就直接跳转到首页
                         const redirectPath = route.query.redirect || '/main';
                         router.push(redirectPath);
                     } else {
+                        // 登录失败
                         pointer.value = "用户未注册";
                     }
                 })
+
             } else {
                 //提交注册信息
-                userService.RegisterUser(user.name, user.account, user.password).then(() => {
+                myrequest.userRegister(user.name, user.account, user.password).then(() => {
                     //注册成功
                     if (registerUserResult.success == true) {
                         logOrReg();
