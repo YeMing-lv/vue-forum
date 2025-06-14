@@ -1,8 +1,5 @@
 import { createRouter } from "vue-router";
 import { createWebHistory } from "vue-router";
-import Main from "../components/Main.vue";
-import Login from "../components/Login.vue";
-import Question from "../components/Question.vue";
 import NotFound from "../components/NotFound.vue";
 import myrequest from "../other/api/request";
 
@@ -15,22 +12,27 @@ const routes = [
     {
         path: '/main',
         name: 'Main',
-        component: Main,
+        component: () => import("../components/Main.vue")
     },
     {
         path: '/login',
         name: 'Login',
-        component: Login,
+        component: () => import("../components/Login.vue")
     },
     {
         path: '/question',
         name: 'Question',
-        component: Question,
+        component: () => import("../components/Question.vue")
+    },
+    {
+        path: '/writting',
+        name: 'Writting',
+        component: () => import("../components/Writing.vue")
     },
     {
         path: '/:pathMatch(.*)*',
         name: 'NotFound',
-        component: NotFound,
+        component: () => import("../components/NotFound.vue")
     },
 ]
 
@@ -40,25 +42,28 @@ const router = createRouter({
 });
 
 // 路由跳转依据 token 做登录验证
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     if (to.path === '/login') { // 如果跳转到登录页面就清除token和user登录用户数据
         localStorage.removeItem("token");
         next();
     } else {
         // 跳转其它页面就通过判断 token 是否有效
         // 来决定是正常跳转，还是跳转到login登录页面
-        let token = localStorage.getItem("token");
-        if (token === null || token === '') { // token 为空则跳转登录页面
-            next({ name:'Login', query:{ redirect: to.fullPath } });
+        const token = localStorage.getItem("token");
+
+        if (token === null || token === '' || !token) { // token 为空则跳转登录页面
+            next({ name: 'Login', query: { redirect: to.fullPath } });
         } else {
             // 发送请求校验 token 是否正确
-            myrequest.checkToken(token).then((response) => {
-                if(!response) {
-                    console.log('token校验失败');
-                    next({ name:'Login', query:{ redirect: to.fullPath } });
-                }
-            })
-            next();
+            const response = await myrequest.checkToken(token);
+
+            if (response.code === '500' && response.msg === "token认证失败") {
+                console.log('token校验失败');
+                next({ name: 'Login', query: { redirect: to.fullPath } });
+            } else {
+                next();
+            }
+            
         }
     }
 });

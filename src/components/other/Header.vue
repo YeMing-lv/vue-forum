@@ -36,7 +36,7 @@ const outLogin = () => {
                             style="color: inherit;">首页</router-link></li>
                     <li :class="{ active: headerNavActive === 2 }"><router-link to=""
                             style="color: inherit;">文章</router-link></li>
-                    <li :class="{ active: headerNavActive === 3 }"><router-link to=""
+                    <li :class="{ active: headerNavActive === 3 }"><router-link to="/writting"
                             style="color: inherit;">创作</router-link></li>
                 </ul>
             </div>

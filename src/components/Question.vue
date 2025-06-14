@@ -1,15 +1,11 @@
 <script setup>
 import Header from './other/Header.vue';
 import Answer from './Answer.vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useQueStore } from '../other/store/quePinia';
 import { useUserStore } from '../other/store/userPinia';
 import { useNavStore } from '../other/store/navPinia';
 import { computed, onMounted, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
-
-const route = useRoute();
-const router = useRouter();
 
 const queStore = useQueStore();
 const userStore = useUserStore();
@@ -18,7 +14,11 @@ const navStore = useNavStore();
 // 当前话题的数据
 const currentQuestion = computed(() => queStore.currentQuestion);
 const questionIsAgree = computed(() => queStore.questionIsAgree);
-const tagList = computed(() => currentQuestion.value.queTag.split(','));
+const tagList = computed(() => {
+    if (currentQuestion.value.queTag != null) {
+        currentQuestion.value.queTag.split(',')
+    }
+});
 const author = computed(() => queStore.author);
 
 // 关注按钮的处理
@@ -52,7 +52,10 @@ const agree = async (queId) => {
     }
 }
 
-onMounted(() => navStore.headerNavActive = 0);
+onMounted(() => {
+    console.log(queStore)
+    navStore.headerNavActive = 0
+});
 
 </script>
 
@@ -66,7 +69,7 @@ onMounted(() => navStore.headerNavActive = 0);
                     {{ tag }}
                 </el-tag>
                 <div class="title">{{ currentQuestion.queTitle }}</div>
-                <div class="content">{{ currentQuestion.queContent }}</div>
+                <div class="content" v-html="currentQuestion.queContent"></div>
                 <div class="other">
                     <el-button :type="ifFollower(currentQuestion.queId) ? 'info' : 'primary'"
                         @click="changeFollower('question', currentQuestion.queId)">
@@ -75,7 +78,7 @@ onMounted(() => navStore.headerNavActive = 0);
                     <el-button><el-icon>
                             <EditPen />
                         </el-icon>写回答</el-button>
-                    <div class="like" >
+                    <div class="like">
                         <el-button text @click="agree(currentQuestion.queId)">
                             <img src="../../public/image/like.png" alt="like">
                             点赞{{ currentQuestion.queLikeNum }}
@@ -121,6 +124,7 @@ onMounted(() => navStore.headerNavActive = 0);
                 </div>
             </div>
         </div>
+        <el-backtop :right="100" :bottom="100" />
         <!-- <el-footer style="border: 1px solid">Footer</el-footer> -->
     </div>
 </template>

@@ -64,7 +64,7 @@ const agree = async (ansId) => {
                 </el-button>
 
             </div>
-            <div class="ans-content">{{ ans.answer.ansContent }}</div>
+            <div class="ans-content" v-html="ans.answer.ansContent"></div>
             <div class="ans-time">编辑于：{{ formatUTCtoLocal(ans.answer.ansTime) }}</div>
             <el-button type="primary" plain @click="agree(ans.answer.ansId)">
                 <el-icon style="margin-right: 5px;"><CaretTop /></el-icon>
@@ -92,6 +92,7 @@ const agree = async (ansId) => {
 .ans-author {
     display: flex;
     align-items: center;
+    margin-bottom: 5px;
 }
 
 .ans-head {
@@ -105,6 +106,7 @@ const agree = async (ansId) => {
 }
 
 .ans-content {
+    margin-bottom: 5px;
     line-height: 30px;
 }
 

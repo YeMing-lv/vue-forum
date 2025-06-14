@@ -4,7 +4,7 @@ import Header from './other/Header.vue';
 import { useQueStore } from '../other/store/quePinia';
 import { useAnsStore } from '../other/store/ansPinia';
 import { useNavStore } from '../other/store/navPinia';
-import { computed, onBeforeMount, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -38,12 +38,13 @@ onMounted(() => navStore.headerNavActive = 1);
                     小创作中心
                 </div>
                 <div>
-                    贴吧推荐
+                    文章推荐
                 </div>
                 <div>
                     推荐关注
                 </div>
             </div>
+            <el-backtop :right="100" :bottom="100" />
         </div>
         <el-footer style="border: 1px solid">Footer</el-footer>
     </div>
