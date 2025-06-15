@@ -12,9 +12,19 @@ const answerList = computed(() => ansStore.answerList);
 const answerIsAgree = computed(() => ansStore.answerIsAgree);
 
 // 要显示的 部分answerList
-const displayAnswerList = ref(answerList.value.slice(0, 2));
+const displayAnswerList = ref();
 
-// onMounted(() => console.log(answerList.value));
+const ifShowMore = ref(false);
+
+onMounted(() => {
+    // 初始显示的回答数
+    if (answerList.value.length <= 2) {
+        displayAnswerList.value = answerList.value;
+    } else {
+        displayAnswerList.value = answerList.value.slice(0, 2);
+        ifShowMore.value = true;
+    }
+});
 
 // 关注按钮的处理  ？？？？？？做个模块？？？？？？
 // 判断当前关注关系是 未关注 还是 已关注
@@ -32,30 +42,29 @@ const changeFollower = async (attType, id) => {
 // ？？？？？？做个模块？？？？？？？
 // 赞同点击事件
 const agree = async (ansId) => {
-    // console.log(answerIsAgree.value)
-    for (let i = 0; i < answerList.value.length; i++) {
-        const elementI = answerList.value[i];
-        for (let j = 0; j < answerIsAgree.value.length; j++) {
-            const elementJ = answerIsAgree.value[j];
-            if (elementI.answer.ansId == ansId && elementJ == ansId) {
-                // elementI.answer.ansLikeNum--;
-                await ansStore.updateAnswerLikeNum('down', ansId);
-                ansStore.deleteAgreedAnswer(ansId);
-                break;
-            } else if (elementI.answer.ansId == ansId && j == answerIsAgree.value.length - 1 && elementJ != ansId) {
-                // elementI.answer.ansLikeNum++;
-                await ansStore.updateAnswerLikeNum('up', ansId);
-                ansStore.addAgreedAnswer(ansId);
-                break;
-            }
-        }
+    if (answerIsAgree.value.includes(ansId)) { // 已经点赞过了
+        await ansStore.updateAnswerLikeNum('down', ansId);
+        ansStore.deleteAgreedAnswer(ansId);
+    } else { // 还没点赞过
+        await ansStore.updateAnswerLikeNum('up', ansId);
+        ansStore.addAgreedAnswer(ansId);
     }
 }
 
 // 显示更多的回答
 const addMoreAnswer = () => {
     const dLength = displayAnswerList.value.length;
-    displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength+2)];
+
+    if (dLength < answerList.value.length - 2) { // 余数大于 2
+        displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength + 2)];
+    } else if (dLength === answerList.value.length - 2) { // 余数等于 2
+        displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength + 2)];
+
+        ifShowMore.value = false; // 已经显示全部话题
+    } else { // 余数等于 1
+        displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength + 1)];
+        ifShowMore.value = false;
+    }
 }
 
 </script>
@@ -73,7 +82,7 @@ const addMoreAnswer = () => {
                     {{ ifFollower(ans.user.userId) ? "已关注" : "+关注" }}
                 </el-button>
             </div>
-            <div class="ans-content" v-html="ans.answer.ansContent"></div>
+            <span class="ans-content" v-html="ans.answer.ansContent"></span>
             <div class="ans-time">编辑于：{{ formatUTCtoLocal(ans.answer.ansTime) }}</div>
             <el-button type="primary" plain @click="agree(ans.answer.ansId)">
                 <el-icon style="margin-right: 5px;">
@@ -84,8 +93,11 @@ const addMoreAnswer = () => {
             <br>
         </div>
         <el-divider></el-divider>
-        <div class="ans-more" @click="addMoreAnswer">
+        <div v-if="ifShowMore === true" class="ans-more" @click="addMoreAnswer">
             查看更多回答
+        </div>
+        <div v-if="ifShowMore === false" class="ans-end">
+            已经到底了
         </div>
     </div>
 </template>
@@ -143,5 +155,14 @@ const addMoreAnswer = () => {
 
 .ans-more:hover {
     font-weight: 550;
+}
+
+.ans-end {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 20px;
+    font-size: 14px;
+    background: #fff;
 }
 </style>

@@ -22,12 +22,7 @@ export const useAnsStore = defineStore('ans', {
         },
         async updateAnswerLikeNum(upOrdown, id) {
             const result = await myrequest.updateLikeNum('answer', upOrdown, id);
-            for (let i = 0; i < this.answerList.length; i++) {
-                const element = this.answerList[i];
-                if (element.answer.ansId == id) {
-                    this.answerList[i].answer = result;
-                }
-            }
+            this.answerList[this.answerList.findIndex(item => item.answer.ansId === id)].answer = result;
         }
     },
     persist: true

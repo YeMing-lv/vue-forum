@@ -142,8 +142,12 @@ export default {
     },
 
     // question话题接口
-    async fetchQuestionList() {
-
+    async fetchQuestionList(listType) {
+        let response = null;
+        if (listType === "recommend") { // 获取推荐话题列表
+            response = await apiClient.get(`/question/recommend`);
+            return response.data;
+        } 
     },
     async fetchCurrentQuestion(id) {
         const queResponse = await apiClient.get(`/question/${id}`);
@@ -162,7 +166,7 @@ export default {
 
     // question的answer回答接口
     async fetchQueAnswerList(id) {
-        const response = await apiClient.get(`/answer/by-que/${id}`);
+        const response = await apiClient.get(`/answer/question/${id}`);
         return response.data;
     },
     async updateLikeNum(type, upOrdown, id) {

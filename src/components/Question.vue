@@ -69,7 +69,7 @@ onMounted(() => {
                     {{ tag }}
                 </el-tag>
                 <div class="title">{{ currentQuestion.queTitle }}</div>
-                <div class="content" v-html="currentQuestion.queContent"></div>
+                <span class="content" v-html="currentQuestion.queContent"></span>
                 <div class="other">
                     <el-button :type="ifFollower(currentQuestion.queId) ? 'info' : 'primary'"
                         @click="changeFollower('question', currentQuestion.queId)">
