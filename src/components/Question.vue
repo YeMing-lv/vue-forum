@@ -198,6 +198,7 @@ onMounted(() => {
 }
 
 .que-answer {
+    min-width: 770px;
     margin-right: 10px;
     background: #fff;
     box-shadow: 0 1px 8px #d0d0d0;

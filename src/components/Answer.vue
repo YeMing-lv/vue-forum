@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { CaretTop } from '@element-plus/icons-vue';
 import { formatUTCtoLocal } from '../other/utils/timeUtils.js';
 import { useAnsStore } from '../other/store/ansPinia';
@@ -10,6 +10,11 @@ const userStore = useUserStore();
 
 const answerList = computed(() => ansStore.answerList);
 const answerIsAgree = computed(() => ansStore.answerIsAgree);
+
+// 要显示的 部分answerList
+const displayAnswerList = ref(answerList.value.slice(0, 2));
+
+// onMounted(() => console.log(answerList.value));
 
 // 关注按钮的处理  ？？？？？？做个模块？？？？？？
 // 判断当前关注关系是 未关注 还是 已关注
@@ -24,8 +29,6 @@ const changeFollower = async (attType, id) => {
     }
 }
 
-// onMounted(() => console.log(answerList.value));
-
 // ？？？？？？做个模块？？？？？？？
 // 赞同点击事件
 const agree = async (ansId) => {
@@ -39,7 +42,7 @@ const agree = async (ansId) => {
                 await ansStore.updateAnswerLikeNum('down', ansId);
                 ansStore.deleteAgreedAnswer(ansId);
                 break;
-            } else if (elementI.answer.ansId == ansId && j == answerIsAgree.value.length-1 && elementJ != ansId) {
+            } else if (elementI.answer.ansId == ansId && j == answerIsAgree.value.length - 1 && elementJ != ansId) {
                 // elementI.answer.ansLikeNum++;
                 await ansStore.updateAnswerLikeNum('up', ansId);
                 ansStore.addAgreedAnswer(ansId);
@@ -48,29 +51,41 @@ const agree = async (ansId) => {
         }
     }
 }
+
+// 显示更多的回答
+const addMoreAnswer = () => {
+    const dLength = displayAnswerList.value.length;
+    displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength+2)];
+}
+
 </script>
 
 <template>
     <div class="answer">
-        <div class="ans-number">{{ answerList.length }}个回答</div>
+        <div class="ans-number">全部{{ answerList.length }}个回答</div>
         <hr style="width: 98%;margin: 0 auto;">
-        <div class="ans-container" v-for="ans in answerList">
+        <div class="ans-container" v-for="ans in displayAnswerList">
             <div class="ans-author">
                 <img class="ans-head" :src="ans.user.userHead" alt="ansAuthorHead">
                 <div class="ans-name">{{ ans.user.userName }}</div>
-
-                <el-button :type="ifFollower(ans.user.userId) ? 'info' : ''" @click="changeFollower('user', ans.user.userId)" style="float: right;">
+                <el-button :type="ifFollower(ans.user.userId) ? 'info' : ''"
+                    @click="changeFollower('user', ans.user.userId)" style="float: right;">
                     {{ ifFollower(ans.user.userId) ? "已关注" : "+关注" }}
                 </el-button>
-
             </div>
             <div class="ans-content" v-html="ans.answer.ansContent"></div>
             <div class="ans-time">编辑于：{{ formatUTCtoLocal(ans.answer.ansTime) }}</div>
             <el-button type="primary" plain @click="agree(ans.answer.ansId)">
-                <el-icon style="margin-right: 5px;"><CaretTop /></el-icon>
+                <el-icon style="margin-right: 5px;">
+                    <CaretTop />
+                </el-icon>
                 赞同{{ ans.answer.ansLikeNum }}
             </el-button>
             <br>
+        </div>
+        <el-divider></el-divider>
+        <div class="ans-more" @click="addMoreAnswer">
+            查看更多回答
         </div>
     </div>
 </template>
@@ -113,5 +128,20 @@ const agree = async (ansId) => {
 .ans-time {
     font-size: small;
     font-weight: 200;
+}
+
+.ans-more {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 20px;
+    font-size: 14px;
+    font-weight: 300;
+    background: #fff;
+    cursor: pointer;
+}
+
+.ans-more:hover {
+    font-weight: 550;
 }
 </style>

@@ -9,7 +9,7 @@ import { useQueStore } from '../other/store/quePinia';
 import { useAnsStore } from '../other/store/ansPinia';
 
 import '@wangeditor/editor/dist/css/style.css';
-import { onBeforeUnmount, ref, shallowRef, onMounted, computed, reactive } from 'vue';
+import { onBeforeUnmount, ref, shallowRef, onBeforeMount, reactive } from 'vue';
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
 
 import { ElMessage } from 'element-plus';
@@ -38,8 +38,8 @@ const imageList1 = reactive([]);
 // 保存 文字提示
 const saveDialogActive = ref(false);
 
-// 模拟 ajax 异步获取内容
-onMounted(async () => {
+
+onBeforeMount(async () => {
     navStore.headerNavActive = 3;
     console.log(localStorage.getItem("token"));
 
@@ -50,7 +50,7 @@ const toolbarConfig = {};
 const editorConfig = {
     placeholder: '请输入内容...',
     MENU_CONF: {
-        uploadImage: {
+        uploadImage: { // 图片上传
             fieldName: 'file',
             server: `http://localhost:8082/image/upload?type=queAndAns`,
             headers: {

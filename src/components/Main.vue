@@ -4,7 +4,7 @@ import Header from './other/Header.vue';
 import { useQueStore } from '../other/store/quePinia';
 import { useAnsStore } from '../other/store/ansPinia';
 import { useNavStore } from '../other/store/navPinia';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,12 +14,19 @@ const navStore = useNavStore();
 
 const currentQueId = computed(() => queStore.currentQuestion.value.queId);
 
+const activeMenuIndex = ref('2');
+
 // 跳转到话题页面，要先获取que话题和对应ans回答数据
 const toQuestion = async (id) => {
     await queStore.fetchCurrentQuestion(id).then(
         ansStore.fetchQueAnswerList(id)
     )
     router.push('/question');
+}
+
+// 导航栏 选择处理
+const handleSelect = () => {
+
 }
 
 onMounted(() => navStore.headerNavActive = 1);
@@ -31,6 +38,12 @@ onMounted(() => navStore.headerNavActive = 1);
         <Header />
         <div class="container content">
             <div class="content-question">
+                <el-menu :default-active="activeMenuIndex" class="content-menu" mode="horizontal"
+                    @select="handleSelect()">
+                    <el-menu-item index="1">关注</el-menu-item>
+                    <el-menu-item index="2">推荐</el-menu-item>
+                    <el-menu-item index="3">热榜</el-menu-item>
+                </el-menu>
                 话题部分<el-button @click="toQuestion(101103)">测试话题组件</el-button>
             </div>
             <div class="content-aside">
