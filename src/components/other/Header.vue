@@ -2,17 +2,29 @@
 import { computed, onMounted, ref } from 'vue';
 import { useUserStore } from '../../other/store/userPinia';
 import { useNavStore } from '../../other/store/navPinia';
+import { useQueStore } from '../../other/store/quePinia';
+import { useAnsStore } from '../../other/store/ansPinia';
 import { useRoute, useRouter } from 'vue-router';
 import { Search, BellFilled, Comment, Avatar, Setting, SwitchButton } from '@element-plus/icons-vue';
 
 const userStore = useUserStore();
 const navStore = useNavStore();
+const queStore = useQueStore();
+const ansStore = useAnsStore();
 const route = useRoute();
 const router = useRouter();
 
 const headerNavActive = computed(() => navStore.headerNavActive);
 const userHeadImage = computed(() => userStore.user.userHead);
+const autoComQuestionList = computed(() => queStore.searchAutoCompleteQuestionList);
 
+// 输入框输入
+const searchInput = ref('');
+
+// 从服务器获取的 查询结果列表
+const links = ref();
+
+// 退出登录
 const outLogin = () => {
     localStorage.setItem('isLoggedIn', false);
     userStore.cleanUser();
@@ -20,7 +32,36 @@ const outLogin = () => {
     router.push(redirectPath);
 }
 
-// onMounted(() => console.log(headerNavActive.value))
+// 获取补全输入数据列表
+const handleQuestionSearch = (queryString, cb) => {
+    const result = queryString ? autoComQuestionList.value.filter(
+        (item) => {
+            return (item.queTitle.toLowerCase().indexOf(queryString.toLowerCase()) != -1)
+        }
+    )
+        : autoComQuestionList.value;
+    cb(result);
+}
+
+// 选择补全列表的话题 跳转话题页面
+const handleSearchSelect = async (item) => {
+    console.log(typeof item.value)
+    if (typeof item.value === "undefined") { // 过滤数据类型
+        await queStore.fetchCurrentQuestion(item.queId).then(
+            ansStore.fetchQueAnswerList(item.queId)
+        )
+        router.push('/question');
+    } else {
+        await queStore.fetchSearchQuestionList(item.value).then(
+            router.push('/search')
+        )
+    }
+}
+
+onMounted(() => {
+    // console.log(headerNavActive.value)
+
+})
 
 </script>
 
@@ -41,7 +82,9 @@ const outLogin = () => {
                 </ul>
             </div>
             <div class="header-search">
-                <el-autocomplete :suffix-icon="Search" />
+                <el-autocomplete :suffix-icon="Search" v-model="searchInput" value-key="queTitle"
+                    :fetch-suggestions="handleQuestionSearch" clearable class="search-input" placeholder="请输入关键词"
+                    @select="handleSearchSelect" select-when-unmatched />
             </div>
             <div class="header-user">
                 <ul>

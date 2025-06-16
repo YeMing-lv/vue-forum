@@ -2,6 +2,7 @@ import { createRouter } from "vue-router";
 import { createWebHistory } from "vue-router";
 import NotFound from "../components/NotFound.vue";
 import myrequest from "../other/api/request";
+import component from "element-plus/es/components/tree-select/src/tree-select-option.mjs";
 
 // vue-router路由表
 const routes = [
@@ -28,6 +29,11 @@ const routes = [
         path: '/writting',
         name: 'Writting',
         component: () => import("../components/Writing.vue")
+    },
+    {
+        path: '/search',
+        name: 'Search',
+        component: () => import("../components/Search.vue")
     },
     {
         path: '/:pathMatch(.*)*',

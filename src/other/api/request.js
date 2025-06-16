@@ -147,7 +147,12 @@ export default {
         if (listType === "recommend") { // 获取推荐话题列表
             response = await apiClient.get(`/question/recommend`);
             return response.data;
-        } 
+        }
+    },
+    // 获取话题查询结果
+    async fetchSearchQuestionList(keyword) {
+        const response = await apiClient.get(`/question/search/${keyword}`);
+        return response.data;
     },
     async fetchCurrentQuestion(id) {
         const queResponse = await apiClient.get(`/question/${id}`);

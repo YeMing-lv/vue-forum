@@ -47,18 +47,12 @@ const changeFollower = async (attType, id) => {
 // ？？？？？？做个模块？？？？？？？
 // 赞同点击事件
 const agree = async (queId) => {
-    // console.log(questionIsAgree.value)
-    for (let i = 0; i < questionIsAgree.value.length; i++) {
-        const element = questionIsAgree.value[i];
-        if (element == queId) {
-            await queStore.updateQuestionLikeNum('down', queId);
-            queStore.deleteAgreedQuestion(queId);
-            break;
-        } else if (i == questionIsAgree.value.length - 1 && element != queId) {
-            await queStore.updateQuestionLikeNum('up', queId);
-            queStore.addAgreedQuestion(queId);
-            break;
-        }
+    if (questionIsAgree.value.includes(queId)) {
+        await queStore.updateQuestionLikeNum('down', queId);
+        queStore.deleteAgreedQuestion(queId);
+    } else {
+        await queStore.updateQuestionLikeNum('up', queId);
+        queStore.addAgreedQuestion(queId);
     }
 }
 
@@ -87,7 +81,7 @@ const handleEditor = (data) => {
                     </el-button>
                     <el-button @click="handleEditor"><el-icon>
                             <EditPen />
-                        </el-icon>{{ ifEdit ? "编辑回答" : "写回答"}}</el-button>
+                        </el-icon>{{ ifEdit ? "编辑回答" : "写回答" }}</el-button>
                     <div class="like">
                         <el-button text @click="agree(currentQuestion.queId)">
                             <img src="../../public/image/like.png" alt="like">
@@ -104,7 +98,7 @@ const handleEditor = (data) => {
         </div>
 
         <div class="que-editor">
-            <Editor v-if="ifEdit" editor-type="answer" @if-complete-answer-edit="handleEditor"/>
+            <Editor v-if="ifEdit" editor-type="answer" @if-complete-answer-edit="handleEditor" />
         </div>
 
         <div class="container que-content">
