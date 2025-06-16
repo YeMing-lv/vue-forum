@@ -7,8 +7,15 @@ import { formatUTCtoLocal } from '../../other/utils/timeUtils';
 
 const userStore = useUserStore();
 
-const draftList = computed(() => userStore.queDraft);
+const draftList = computed(() => {
+    if (prop.draftType === 'question') {
+        return userStore.queDraft;
+    } else {
+        return userStore.ansDraft;
+    }
+});
 
+const prop = defineProps(['draftType']);
 const emit = defineEmits(['editDraft']);
 
 const activeNullDraft = ref(false);
@@ -24,12 +31,20 @@ const deleteDraft = async (draId) => {
 }
 
 onBeforeMount(async () => {
-    // 获取登录用户的 话题草稿
-    await userStore.fetchQueDraft().then(() => {
-        if (userStore.queDraft.length == 0) { // 没有草稿
-            activeNullDraft.value = true;
-        }
-    });
+    // 获取登录用户的 草稿
+    if (prop.draftType === 'question') {
+        await userStore.fetchQueDraft().then(() => {
+            if (userStore.queDraft.length == 0) { // 没有草稿
+                activeNullDraft.value = true;
+            }
+        });
+    } else {
+        await userStore.fetchAnsDraft().then(() => {
+            if (userStore.ansDraft.length == 0) { // 没有草稿
+                activeNullDraft.value = true;
+            }
+        });
+    }
 })
 
 </script>

@@ -1,6 +1,8 @@
 <script setup>
 import Header from './other/Header.vue';
 import Answer from './Answer.vue';
+import Editor from './other/Editor.vue';
+
 import { useQueStore } from '../other/store/quePinia';
 import { useUserStore } from '../other/store/userPinia';
 import { useNavStore } from '../other/store/navPinia';
@@ -20,6 +22,14 @@ const tagList = computed(() => {
     }
 });
 const author = computed(() => queStore.author);
+
+// 控制编辑器显示
+const ifEdit = ref(false);
+
+onMounted(() => {
+    // console.log(queStore.value)
+    navStore.headerNavActive = 0;
+});
 
 // 关注按钮的处理
 // 判断当前关注关系是 未关注 还是 已关注
@@ -52,10 +62,10 @@ const agree = async (queId) => {
     }
 }
 
-onMounted(() => {
-    console.log(queStore)
-    navStore.headerNavActive = 0
-});
+// 完成回答编辑 隐藏编辑器
+const handleEditor = (data) => {
+    ifEdit.value = !ifEdit.value;
+}
 
 </script>
 
@@ -69,15 +79,15 @@ onMounted(() => {
                     {{ tag }}
                 </el-tag>
                 <div class="title">{{ currentQuestion.queTitle }}</div>
-                <span class="content" v-html="currentQuestion.queContent"></span>
+                <div class="content" v-html="currentQuestion.queContent"></div>
                 <div class="other">
                     <el-button :type="ifFollower(currentQuestion.queId) ? 'info' : 'primary'"
                         @click="changeFollower('question', currentQuestion.queId)">
                         {{ ifFollower(currentQuestion.queId) ? '已关注' : '关注问题' }}
                     </el-button>
-                    <el-button><el-icon>
+                    <el-button @click="handleEditor"><el-icon>
                             <EditPen />
-                        </el-icon>写回答</el-button>
+                        </el-icon>{{ ifEdit ? "编辑回答" : "写回答"}}</el-button>
                     <div class="like">
                         <el-button text @click="agree(currentQuestion.queId)">
                             <img src="../../public/image/like.png" alt="like">
@@ -91,6 +101,10 @@ onMounted(() => {
                 </div>
                 <div>浏览数<br><span style="font-weight: 800;">{{ currentQuestion.queBrowseNum }}</span></div>
             </div>
+        </div>
+
+        <div class="que-editor">
+            <Editor v-if="ifEdit" editor-type="answer" @if-complete-answer-edit="handleEditor"/>
         </div>
 
         <div class="container que-content">

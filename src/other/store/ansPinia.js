@@ -20,6 +20,10 @@ export const useAnsStore = defineStore('ans', {
             const result = await myrequest.fetchQueAnswerList(id);
             this.answerList = result;
         },
+        async insertAnswer(ansAuthorId, ansQueId, ansContent) {
+            const result = await myrequest.insertAnswer(ansAuthorId, ansQueId, ansContent);
+            this.answerList.unshift(result);
+        },
         async updateAnswerLikeNum(upOrdown, id) {
             const result = await myrequest.updateLikeNum('answer', upOrdown, id);
             this.answerList[this.answerList.findIndex(item => item.answer.ansId === id)].answer = result;

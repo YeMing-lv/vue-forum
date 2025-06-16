@@ -7,6 +7,7 @@ export const useQueStore = defineStore('que', {
         currentQuestion: null,
         author: null,
         questionIsAgree: [0],
+        searchQuestionList: null,
     }),
     actions: {
         cleanCurrentQuestion() {

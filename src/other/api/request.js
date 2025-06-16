@@ -190,6 +190,16 @@ export default {
         return 'failed updateLikeNum';
     },
 
+    // answer 回答接口
+    async insertAnswer(ansAuthorId, ansQueId, ansContent) {
+        const response = await apiClient.post(`/answer`,{
+            ansAuthorId,
+            ansQueId,
+            ansContent
+        });
+        return response.data;
+    },
+
     // draft 草稿接口
     async insertDraft(draAuthorId, draType, draTitle, draContent) {
         await apiClient.post(`/draft`, {
@@ -201,6 +211,10 @@ export default {
     },
     async fetchQueDraft(userId) {
         const response = await apiClient.get(`/draft/question/${userId}`);
+        return response.data;
+    },
+    async fetchAnsDraft(userId) {
+        const response = await apiClient.get(`/draft/answer/${userId}`);
         return response.data;
     },
     async deleteDraft(draId) {

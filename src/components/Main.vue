@@ -63,15 +63,17 @@ const agree = async (ansId) => {
             <div class="content-question">
                 <el-menu :default-active="activeMenuIndex" class="content-menu" mode="horizontal"
                     @select="handleSelect()">
-                    <el-menu-item index="1">关注</el-menu-item>
+                    <el-menu-item index="1" disabled>关注</el-menu-item>
                     <el-menu-item index="2">推荐</el-menu-item>
-                    <el-menu-item index="3">热榜</el-menu-item>
+                    <el-menu-item index="3" disabled>热榜</el-menu-item>
                 </el-menu>
-                话题部分<el-button @click="toQuestion(101103)">测试话题组件</el-button>
                 <div class="content-list" v-for="que in displayQuestionList">
                     <div class="content-title" @click="toQuestion(que.question.queId)">{{ que.question.queTitle }}</div>
                     <div class="content-answer" @click="toQuestion(que.question.queId)">
-                        {{ que.userName }}:
+                        <div class="content-answer-user">
+                            <img :src="que.user.userHead" style="width: 40px;margin-right: 10px;" alt="userHead">
+                            {{ que.user.userName }}:
+                        </div>
                         <span class="ans-content" v-html="que.answer.ansContent"></span>
                     </div>
                     <el-button type="primary" plain @click="agree(que.answer.ansId)">
@@ -84,9 +86,10 @@ const agree = async (ansId) => {
                 </div>
             </div>
             <div class="content-aside">
-                <div>
+                其它
+                <!-- <div>
                     小创作中心
-                </div>
+                </div> -->
                 <!-- <div>
                     文章推荐
                 </div>
@@ -115,6 +118,10 @@ const agree = async (ansId) => {
 
 }
 
+.content-menu {
+    height: 40px;
+}
+
 .content-list {
     padding: 0 10px;
     min-width: 100%;
@@ -139,6 +146,11 @@ const agree = async (ansId) => {
 
 .content-answer:hover {
     color: rgb(99, 99, 99);
+}
+
+.content-answer-user {
+    display: flex;
+    align-items: center;
 }
 
 .content-answer .ans-content {

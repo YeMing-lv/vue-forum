@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { CaretTop } from '@element-plus/icons-vue';
 import { formatUTCtoLocal } from '../other/utils/timeUtils.js';
 import { useAnsStore } from '../other/store/ansPinia';
 import { useUserStore } from '../other/store/userPinia.js';
+import { fa } from 'element-plus/es/locales.mjs';
 
 const ansStore = useAnsStore();
 const userStore = useUserStore();
@@ -11,17 +12,19 @@ const userStore = useUserStore();
 const answerList = computed(() => ansStore.answerList);
 const answerIsAgree = computed(() => ansStore.answerIsAgree);
 
-// 要显示的 部分answerList
-const displayAnswerList = ref();
+// 要显示的 部分answerList 的索引
+const displayIndex = ref();
 
 const ifShowMore = ref(false);
 
 onMounted(() => {
+    // console.log(answerList.value);
+
     // 初始显示的回答数
     if (answerList.value.length <= 2) {
-        displayAnswerList.value = answerList.value;
+        displayIndex.value = answerList.value.length;
     } else {
-        displayAnswerList.value = answerList.value.slice(0, 2);
+        displayIndex.value = 2;
         ifShowMore.value = true;
     }
 });
@@ -53,17 +56,14 @@ const agree = async (ansId) => {
 
 // 显示更多的回答
 const addMoreAnswer = () => {
-    const dLength = displayAnswerList.value.length;
-
-    if (dLength < answerList.value.length - 2) { // 余数大于 2
-        displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength + 2)];
-    } else if (dLength === answerList.value.length - 2) { // 余数等于 2
-        displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength + 2)];
-
-        ifShowMore.value = false; // 已经显示全部话题
-    } else { // 余数等于 1
-        displayAnswerList.value = [...displayAnswerList.value, ...answerList.value.slice(dLength, dLength + 1)];
+    if (displayIndex.value === answerList.value.length-1) { // 剩余 1 个回答
+        displayIndex.value = displayIndex.value + 1;
         ifShowMore.value = false;
+    } else if (displayIndex.value === answerList.value.length-2) { // 剩余 2 个回答
+        displayIndex.value = displayIndex.value + 2;
+        ifShowMore.value = false;
+    } else { // 剩余回答数大于 2
+        displayIndex.value = displayIndex.value + 2;
     }
 }
 
@@ -73,7 +73,7 @@ const addMoreAnswer = () => {
     <div class="answer">
         <div class="ans-number">全部{{ answerList.length }}个回答</div>
         <hr style="width: 98%;margin: 0 auto;">
-        <div class="ans-container" v-for="ans in displayAnswerList">
+        <div class="ans-container" v-for="ans in answerList.slice(0, displayIndex)">
             <div class="ans-author">
                 <img class="ans-head" :src="ans.user.userHead" alt="ansAuthorHead">
                 <div class="ans-name">{{ ans.user.userName }}</div>

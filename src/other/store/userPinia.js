@@ -5,7 +5,8 @@ export const useUserStore = defineStore('user' , {
     state: () => ({
         user: null,
         attention: null,
-        queDraft: null
+        queDraft: null,
+        ansDraft: null
     }),
     actions: {
         initUserStore() {
@@ -38,6 +39,10 @@ export const useUserStore = defineStore('user' , {
             const result = await myrequest.deleteDraft(draId);
             const filterQueDraft = this.queDraft.filter(draft => draft.draId != draId);
             this.queDraft = filterQueDraft;
+        },
+        async fetchAnsDraft() {
+            const result = await myrequest.fetchAnsDraft(this.user.userId);
+            this.ansDraft = result;
         },
         // 判断当前登录用户是否已关注对应 id 用户或话题
         ifAttention(id) {
