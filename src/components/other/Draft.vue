@@ -27,7 +27,18 @@ const edit = (draft) => {
 
 // 删除 点击事件
 const deleteDraft = async (draId) => {
-    await userStore.deleteDraft(draId);
+    await userStore.deleteDraft(prop.draftType, draId);
+
+    // 删除后判断是否还有草稿
+    if (prop.draftType === 'question') {
+        if (userStore.queDraft.length == 0) { // 没有草稿
+            activeNullDraft.value = true;
+        }
+    } else {
+        if (userStore.ansDraft.length == 0) { // 没有草稿
+            activeNullDraft.value = true;
+        }
+    }
 }
 
 onBeforeMount(async () => {

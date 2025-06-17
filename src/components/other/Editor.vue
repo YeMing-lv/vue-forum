@@ -135,7 +135,10 @@ const customPaste = (editor, event, callback) => {
 
 // 话题 或 回答 提交事件处理
 const publish = async () => {
-    if (!ifInput()) return; // 是否有新输入
+    if (!ifInput()) {
+        ElMessage("请先输入新内容！")
+        return;
+    } // 是否有新输入
     if (!ifInputNull()) return; // 输入规范
 
     if (prop.editorType === 'question') {
@@ -165,6 +168,7 @@ const publish = async () => {
 const saveWrite = async () => {
 
     if (!ifInput()) {
+        ElMessage("请先输入新内容！")
         return;
     }
 
@@ -244,7 +248,6 @@ function ifInputNull() {
 // 判断是否有新内容
 function ifInput() {
     if (titleText.value === '' && valueHtml.value === '<p>hello</p>') { // 等于初始状态
-        ElMessage("请先输入新内容！")
         return false;
     }
     return true;

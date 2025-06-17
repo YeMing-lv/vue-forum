@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import myrequest from "../api/request.js";
 
-export const useUserStore = defineStore('user' , {
+export const useUserStore = defineStore('user', {
     state: () => ({
         user: null,
         attention: null,
@@ -23,8 +23,8 @@ export const useUserStore = defineStore('user' , {
                 localStorage.setItem("token", result.token);
                 console.log(this.user);
                 console.log(localStorage.getItem("token"))
-            }catch (error) {
-                console.log("Error pinia userLogin: "+error);
+            } catch (error) {
+                console.log("Error pinia userLogin: " + error);
             }
         },
         async fetchAttention(id) {
@@ -35,10 +35,16 @@ export const useUserStore = defineStore('user' , {
             const result = await myrequest.fetchQueDraft(this.user.userId);
             this.queDraft = result;
         },
-        async deleteDraft(draId) {
+        async deleteDraft(draftType, draId) {
             const result = await myrequest.deleteDraft(draId);
-            const filterQueDraft = this.queDraft.filter(draft => draft.draId != draId);
-            this.queDraft = filterQueDraft;
+
+            if (draftType === 'question') {
+                const filterQueDraft = this.queDraft.filter(draft => draft.draId != draId);
+                this.queDraft = filterQueDraft;
+            } else if (draftType === 'answer') {
+                const filterQueDraft = this.ansDraft.filter(draft => draft.draId != draId);
+                this.ansDraft = filterQueDraft;
+            }
         },
         async fetchAnsDraft() {
             const result = await myrequest.fetchAnsDraft(this.user.userId);
@@ -50,7 +56,7 @@ export const useUserStore = defineStore('user' , {
                 const element = this.attention[i];
                 if (element.attFollowed == id) {
                     return true;
-                } else if (element.attFollowed != id && i == this.attention.length-1) {
+                } else if (element.attFollowed != id && i == this.attention.length - 1) {
                     return false;
                 }
             }

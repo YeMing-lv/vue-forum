@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { CaretTop } from '@element-plus/icons-vue';
 import { useQueStore } from '../../other/store/quePinia';
 import { useAnsStore } from '../../other/store/ansPinia';
-import { computed, onBeforeMount, onMounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, ref, watch } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -26,6 +26,8 @@ onMounted(() => {
     // 是否还有列表数据要显示
     if (props.questionList.length > displayQueList.value) {
         ifShowMore.value = true;
+    } else {
+        ifShowMore.value = false;
     }
 })
 
@@ -57,10 +59,19 @@ const showMoreQueList = () => {
     displayQueList.value = displayQueList.value + 4;
 }
 
+// 监听 是否还有显示数据
+watch(displayQueList, (newV, oldV) => {
+    if (props.questionList.length > newV) {
+        ifShowMore.value = true;
+    } else {
+        ifShowMore.value = false;
+    }
+})
+
 </script>
 
 <template>
-    <div class="content-list" v-for="que in props.questionList">
+    <div class="content-list" v-for="que in props.questionList.slice(0, displayQueList)">
         <div class="content-title" @click="toQuestion(que.question.queId)">{{ que.question.queTitle }}</div>
         <div class="content-answer" @click="toQuestion(que.question.queId)">
             <div class="content-answer-user">
