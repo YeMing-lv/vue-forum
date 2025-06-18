@@ -189,6 +189,7 @@ const handleEditor = (data) => {
     display: inline-flex;
     padding: 10px;
     text-align: center;
+    min-width: 200px;
 }
 
 .que-header-right .attention {

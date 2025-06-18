@@ -11,6 +11,7 @@ const router = useRouter();
 const queStore = useQueStore();
 const navStore = useNavStore();
 
+// 在页面挂载前 获取数据
 onMounted(async () => {
     navStore.headerNavActive = 1
     await queStore.fetchQuestionList("recommend");
@@ -25,7 +26,6 @@ const handleSelect = () => {
 
 }
 
-
 </script>
 
 <template>
@@ -39,9 +39,7 @@ const handleSelect = () => {
                     <el-menu-item index="2">推荐</el-menu-item>
                     <el-menu-item index="3" disabled>热榜</el-menu-item>
                 </el-menu>
-                <div class="content-list">
-                    <QueList :question-list="questionList" />
-                </div>
+                <QueList :question-list="questionList" />
             </div>
             <div class="content-aside">
                 其它
@@ -73,7 +71,6 @@ const handleSelect = () => {
     margin-right: 10px;
     padding: 10px;
     box-shadow: 0 1px 8px #d0d0d0;
-
 }
 
 .content-menu {
@@ -84,6 +81,5 @@ const handleSelect = () => {
     min-width: 270px;
     padding: 10px;
     box-shadow: 0 1px 8px #d0d0d0;
-
 }
 </style>

@@ -13,11 +13,11 @@ const logAndRegFormRef = ref(); //表单实例（组件库自带的方法，不�
 const title = ref('登录'); //头部标题
 const isLogOrReg = ref(true); //登录和注册状态
 const pointer = ref(''); //底部提示词
-const user = reactive({
+const user = reactive({ //输入的用户信息
     name: '',
     account: '',
     password: '',
-}); //输入的用户信息
+});
 
 //切换登录和注册状态
 function logOrReg() {

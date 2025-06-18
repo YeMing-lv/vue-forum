@@ -26,9 +26,24 @@ const routes = [
         component: () => import("../components/Question.vue")
     },
     {
+        path: '/article',
+        name: 'Article',
+        component: () => import("../components/Article.vue")
+    },
+    {
+        path: '/articleDetail',
+        name: 'ArticleDetail',
+        component: () => import("../components/ArticleDetail.vue")
+    },
+    {
         path: '/writting',
         name: 'Writting',
         component: () => import("../components/Writing.vue")
+    },
+    {
+        path: '/test',
+        name: 'Test',
+        component: () => import("../components/Test.vue")
     },
     {
         path: '/search',

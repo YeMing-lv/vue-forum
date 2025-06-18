@@ -1,4 +1,5 @@
 import axios from "axios";
+import { te } from "element-plus/es/locales.mjs";
 
 //实例化axios
 const apiClient = axios.create({
@@ -102,6 +103,10 @@ export default {
     },
 
     // user用户接口
+    async fetchUserById(userId) {
+        const response = await apiClient.get(`/user/${userId}`);
+        return response.data;
+    },
     async userLogin(account, password) {
         const response = await apiClient.post('/user/login', {
             account,
@@ -225,5 +230,38 @@ export default {
     async deleteDraft(draId) {
         const response = await apiClient.delete(`/draft/${draId}`);
         return response.data;
+    },
+    
+    // article 文章接口
+    async fetchRecommendArticle() {
+        const response = await apiClient.get(`/article/recommend`);
+        return response.data;
+    },
+    async fetchSearchArticleList(keyword) {
+        const response = await apiClient.get(`/article/search/${keyword}`);
+        return response.data;
+    },
+    async createArticle(artAuthorId, artTitle, artContent) {
+        const response = await apiClient.post(`/article`, {
+            artAuthorId,
+            artTitle,
+            artContent
+        });
+        return response.data;
+    },
+    async updateArticleLikeNum(artId, artLikeNum) {
+        const response = await apiClient.put(`/article/like`, {
+            artId,
+            artLikeNum
+        });
+        return response.data;
+    },
+
+    // test和option 题库接口
+    async fetchTestAndOption() {
+        const test = await apiClient.get(`/test`);
+        const option = await apiClient.get(`/option`);
+        const response = { test, option };
+        return response;
     }
 }

@@ -3,24 +3,20 @@ import { useRoute, useRouter } from 'vue-router';
 import { CaretTop } from '@element-plus/icons-vue';
 import { useQueStore } from '../../other/store/quePinia';
 import { useAnsStore } from '../../other/store/ansPinia';
-import { computed, onBeforeMount, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
 const queStore = useQueStore();
 const ansStore = useAnsStore();
 
-// 接收话题列表数据
-const props = defineProps(['questionList']);
+const props = defineProps(['questionList']); // 接收话题列表数据
 
-// 已点赞的 回答
-const answerIsAgree = computed(() => ansStore.answerIsAgree);
+const answerIsAgree = computed(() => ansStore.answerIsAgree);// 已点赞的 回答
 
-// 初始渲染的话题数
-const displayQueList = ref(7);
+const displayQueList = ref(7); // 初始渲染的话题数
 
-// 是否已显示完列表 或 是否还有数据可以显示
-const ifShowMore = ref(false);
+const ifShowMore = ref(false); // 是否已显示完列表 或 是否还有数据可以显示
 
 onMounted(() => {
     // 是否还有列表数据要显示
@@ -74,13 +70,13 @@ watch(displayQueList, (newV, oldV) => {
     <div class="content-list" v-for="que in props.questionList.slice(0, displayQueList)">
         <div class="content-title" @click="toQuestion(que.question.queId)">{{ que.question.queTitle }}</div>
         <div class="content-answer" @click="toQuestion(que.question.queId)">
-            <div class="content-answer-user">
+            <div v-if="que.user != null" class="content-answer-user">
                 <img :src="que.user.userHead" style="width: 40px;margin-right: 10px;" alt="userHead">
                 {{ que.user.userName }}:
             </div>
-            <span class="ans-content" v-html="que.answer.ansContent"></span>
+            <span v-if="que.answer != null" class="ans-content" v-html="que.answer.ansContent"></span>
         </div>
-        <el-button type="primary" plain @click="agree(que.answer.ansId)">
+        <el-button v-if="que.answer != null" type="primary" plain @click="agree(que.answer.ansId)">
             <el-icon style="margin-right: 5px;">
                 <CaretTop />
             </el-icon>
@@ -89,7 +85,7 @@ watch(displayQueList, (newV, oldV) => {
         <el-divider></el-divider>
     </div>
     <div v-if="ifShowMore === true" class="list-more" @click="showMoreQueList">
-        查看更多回答
+        查看更多话题
     </div>
     <div v-if="ifShowMore === false" class="list-end">
         已经到底了

@@ -32,6 +32,7 @@ export const useQueStore = defineStore('que', {
                 const myResult = result.slice(0, 6);
                 this.searchAutoCompleteQuestionList = myResult.map(item => item.question);
             }
+            return result;
         },
         // 获取 搜索 话题列表
         async fetchSearchQuestionList(keyword) {
@@ -40,13 +41,9 @@ export const useQueStore = defineStore('que', {
             console.log(this.questionList);
         },
         async fetchCurrentQuestion(id) {
-            try {
-                const result = await myrequest.fetchCurrentQuestion(id);
-                this.currentQuestion = result.queResponse.data;
-                this.author = result.autResponse.data;
-            } catch (error) {
-                console.log("Error pinia FetchCurrentQuestion: " + error);
-            }
+            const result = await myrequest.fetchCurrentQuestion(id);
+            this.currentQuestion = result.queResponse.data;
+            this.author = result.autResponse.data;
         },
         async updateQuestionLikeNum(upOrdown, id) {
             const result = await myrequest.updateLikeNum('question', upOrdown, id);

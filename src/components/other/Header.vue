@@ -45,16 +45,16 @@ const handleQuestionSearch = (queryString, cb) => {
 
 // 选择补全列表的话题 跳转话题页面
 const handleSearchSelect = async (item) => {
-    console.log(typeof item.value)
     if (typeof item.value === "undefined") { // 过滤数据类型
         await queStore.fetchCurrentQuestion(item.queId).then(
             ansStore.fetchQueAnswerList(item.queId)
         )
         router.push('/question');
-    } else {
-        await queStore.fetchSearchQuestionList(item.value).then(
-            router.push('/search')
-        )
+    } else if (item.value !== '') {
+        navStore.searchKeyword = item.value; // 存储关键词输入
+        await queStore.fetchSearchQuestionList(item.value).then(() => {
+            router.push('/search');
+        })
     }
 }
 
@@ -75,10 +75,12 @@ onMounted(() => {
                 <ul>
                     <li :class="{ active: headerNavActive === 1 }"><router-link to="/main"
                             style="color: inherit;">首页</router-link></li>
-                    <li :class="{ active: headerNavActive === 2 }"><router-link to=""
+                    <li :class="{ active: headerNavActive === 2 }"><router-link to="/article"
                             style="color: inherit;">文章</router-link></li>
                     <li :class="{ active: headerNavActive === 3 }"><router-link to="/writting"
                             style="color: inherit;">创作</router-link></li>
+                    <li :class="{ active: headerNavActive === 4 }"><router-link to="/test"
+                            style="color: inherit;">知识小测</router-link></li>
                 </ul>
             </div>
             <div class="header-search">

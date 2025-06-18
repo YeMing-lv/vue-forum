@@ -20,34 +20,24 @@ const userStore = useUserStore();
 const queStore = useQueStore();
 const ansStore = useAnsStore();
 
-// 编辑器类别是 话题编辑器 还是 回答编辑器
-const prop = defineProps(['editorType']);
+const prop = defineProps(['editorType']); // 编辑器类别 话题编辑器 还是 回答编辑器
 
-// 对 answer 编辑器 完成编辑后的隐藏
-const emit = defineEmits(['ifCompleteAnswerEdit']);
+const emit = defineEmits(['ifCompleteAnswerEdit']); // 对 answer 编辑器 完成编辑后的隐藏
 
-// 导航栏
-const activeIndex = ref('1');
+const activeIndex = ref('1'); // 导航栏
 let newKey;
 
-// 编辑器实例，必须用 shallowRef，重要！
-const editorRef = shallowRef();
+const editorRef = shallowRef(); // 编辑器实例，必须用 shallowRef，重要！
 
-// 标题 HTML
-const titleText = ref('');
-// 内容 HTML
-const valueHtml = ref('<p>hello</p>');
-// 图片列表 所有插入的图片 包括编辑器里删除的图片
-const imageList1 = reactive([]);
+const titleText = ref(''); // 标题 HTML
+const valueHtml = ref('<p>hello</p>'); // 内容 HTML
+const imageList1 = reactive([]); // 图片列表 所有插入的图片 包括编辑器里删除的图片
 
-// 保存 文字提示
-const saveDialogActive = ref(false);
+const saveDialogActive = ref(false); // 保存 文字提示
 
-// 当前是否已 保存草稿
-const ifSaveDraft = ref(false);
+const ifSaveDraft = ref(false); // 当前是否已 保存草稿
 
 // 编辑器动态样式 ???
-
 
 onBeforeMount(async () => {
     if (prop.editorType === 'question') {
@@ -306,7 +296,7 @@ function extractPart(originalUrl) {
     <div class="writting">
         <div class="container editor">
             <el-menu :default-active="activeIndex" class="editor-menu" mode="horizontal" @select="handleSelect">
-                <el-menu-item index="1">编写话题</el-menu-item>
+                <el-menu-item index="1">{{ prop.editorType === 'quesion' ? "编写话题" : "编写回答" }}</el-menu-item>
                 <el-menu-item index="2">草稿箱</el-menu-item>
             </el-menu>
             <div v-if="activeIndex === '1'" style="border: 1px solid #ccc;margin-top: 10px;">
