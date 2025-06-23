@@ -1,10 +1,9 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { CaretTop } from '@element-plus/icons-vue';
-import { formatUTCtoLocal } from '../other/utils/timeUtils.js';
-import { useAnsStore } from '../other/store/ansPinia';
-import { useUserStore } from '../other/store/userPinia.js';
-import { fa } from 'element-plus/es/locales.mjs';
+import { formatUTCtoLocal } from '../../utils/timeUtils.js';
+import { useAnsStore } from '../../store/ansPinia.js';
+import { useUserStore } from '../../store/userPinia.js';
 
 const ansStore = useAnsStore();
 const userStore = useUserStore();

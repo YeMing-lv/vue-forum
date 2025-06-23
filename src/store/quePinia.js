@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import myrequest from '../api/request.js';
+import myrequest from '../api/request';
 
 export const useQueStore = defineStore('que', {
     state: () => ({

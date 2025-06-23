@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useArtStore } from '../../other/store/artPinia';
-import { useAnsStore } from '../../other/store/ansPinia';
+import { useArtStore } from '../../store/artPinia';
+import { useAnsStore } from '../../store/ansPinia';
 
 const route = useRoute();
 const router = useRouter();

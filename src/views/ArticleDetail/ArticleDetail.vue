@@ -1,24 +1,19 @@
 <script setup>
 import { onMounted, computed, ref } from 'vue';
-import Header from './other/Header.vue';
-import Answer from './Answer.vue';
-import Editor from './other/Editor.vue';
-import { useNavStore } from '../other/store/navPinia';
-import { useUserStore } from '../other/store/userPinia';
-import { useArtStore } from '../other/store/artPinia';
-import { useAnsStore } from '../other/store/ansPinia';
-import { formatUTCtoLocal } from '../other/utils/timeUtils';
-import { ElMessage } from 'element-plus';
+import Header from '../../components/Container/Header.vue';
+import Answer from '../../components/List/Answer.vue';
+import Editor from '../../components/Editor/Editor.vue';
+import { useNavStore } from '../../store/navPinia';
+import { useUserStore } from '../../store/userPinia';
+import { useArtStore } from '../../store/artPinia';
+import { formatUTCtoLocal } from '../../utils/timeUtils';
 
 const navStore = useNavStore();
 const userStore = useUserStore();
 const artStore = useArtStore();
-const ansStore = useAnsStore();
 
 const currentArticle = computed(() => artStore.currentArticle);
 const author = computed(() => artStore.author);
-
-const valueText = ref(""); // 评论输入
 
 const ifEdit = ref(false); // 编辑器的显示
 
@@ -63,10 +58,6 @@ const editComplete = (data) => {
                 <span class="main-content" v-html="currentArticle.artContent"></span>
                 <el-divider></el-divider>
                 <div class="main-answer">
-                    <!-- <div class="editor">
-                        评论：<textarea v-model="valueText" style="flex-grow: 2;margin: 0 10px;"/>
-                        <el-button @click="submitAnswer">发表评论</el-button>
-                    </div> -->
                     <el-button @click="handleEditor">{{ ifEdit ? "编写评论" : "写评论" }}</el-button>
                     <div v-if="ifEdit" class="editor">
                         <Editor editor-type="answer" @ifCompleteAnswerEdit="editComplete"/>
@@ -101,7 +92,7 @@ const editComplete = (data) => {
             </div>
         </div>
 
-        <!-- <el-footer style="border: 1px solid">Footer</el-footer> -->
+        <el-footer style="border: 1px solid">Footer</el-footer>
         <el-backtop :right="100" :bottom="100" />
     </div>
 </template>

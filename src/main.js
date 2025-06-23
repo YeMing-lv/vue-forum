@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import router from './other/router'
+import router from './router/router'
 import { createPinia } from 'pinia'
 import piniaPersist from 'pinia-plugin-persistedstate'
 import ElementPlus from 'element-plus'

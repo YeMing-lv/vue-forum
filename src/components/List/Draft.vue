@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onMounted, onBeforeMount, ref } from 'vue';
 
-import { useUserStore } from '../../other/store/userPinia';
+import { useUserStore } from '../../store/userPinia';
 
-import { formatUTCtoLocal } from '../../other/utils/timeUtils';
+import { formatUTCtoLocal } from '../../utils/timeUtils';
 
 const userStore = useUserStore();
 

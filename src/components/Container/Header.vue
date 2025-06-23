@@ -1,18 +1,18 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { useUserStore } from '../../other/store/userPinia';
-import { useNavStore } from '../../other/store/navPinia';
-import { useQueStore } from '../../other/store/quePinia';
-import { useAnsStore } from '../../other/store/ansPinia';
+import { useUserStore } from '../../store/userPinia';
+import { useNavStore } from '../../store/navPinia';
+import { useQueStore } from '../../store/quePinia';
+import { useAnsStore } from '../../store/ansPinia';
 import { useRoute, useRouter } from 'vue-router';
 import { Search, BellFilled, Comment, Avatar, Setting, SwitchButton } from '@element-plus/icons-vue';
 
+const route = useRoute();
+const router = useRouter();
 const userStore = useUserStore();
 const navStore = useNavStore();
 const queStore = useQueStore();
 const ansStore = useAnsStore();
-const route = useRoute();
-const router = useRouter();
 
 const headerNavActive = computed(() => navStore.headerNavActive);
 const userHeadImage = computed(() => userStore.user.userHead);
@@ -60,7 +60,6 @@ const handleSearchSelect = async (item) => {
 
 onMounted(() => {
     // console.log(headerNavActive.value)
-
 })
 
 </script>
@@ -79,8 +78,6 @@ onMounted(() => {
                             style="color: inherit;">文章</router-link></li>
                     <li :class="{ active: headerNavActive === 3 }"><router-link to="/writting"
                             style="color: inherit;">创作</router-link></li>
-                    <li :class="{ active: headerNavActive === 4 }"><router-link to="/test"
-                            style="color: inherit;">知识小测</router-link></li>
                 </ul>
             </div>
             <div class="header-search">
@@ -90,12 +87,12 @@ onMounted(() => {
             </div>
             <div class="header-user">
                 <ul>
-                    <li><el-icon>
+                    <!-- <li><el-icon>
                             <BellFilled />
                         </el-icon>消息</li>
                     <li><el-icon>
                             <Comment />
-                        </el-icon>私信</li>
+                        </el-icon>私信</li> -->
                     <li>
                         <el-popover placement="bottom" trigger="click">
                             <div class="header-user-head"><el-icon>

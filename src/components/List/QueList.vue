@@ -1,8 +1,8 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
 import { CaretTop } from '@element-plus/icons-vue';
-import { useQueStore } from '../../other/store/quePinia';
-import { useAnsStore } from '../../other/store/ansPinia';
+import { useQueStore } from '../../store/quePinia';
+import { useAnsStore } from '../../store/ansPinia';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const route = useRoute();

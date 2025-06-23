@@ -1,11 +1,11 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
-import myrequest from '../../other/api/request';
-import Draft from './Draft.vue';
-import { useNavStore } from '../../other/store/navPinia';
-import { useUserStore } from '../../other/store/userPinia';
-import { useQueStore } from '../../other/store/quePinia';
-import { useAnsStore } from '../../other/store/ansPinia';
+import myrequest from '../../api/request';
+import Draft from '../../components/List/Draft.vue';
+import { useNavStore } from '../../store/navPinia';
+import { useUserStore } from '../../store/userPinia';
+import { useQueStore } from '../../store/quePinia';
+import { useAnsStore } from '../../store/ansPinia';
 
 import '@wangeditor/editor/dist/css/style.css';
 import { onBeforeUnmount, ref, shallowRef, onBeforeMount, reactive, computed, watch } from 'vue';

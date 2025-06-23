@@ -1,11 +1,11 @@
 <script setup>
-import Header from './other/Header.vue';
-import Answer from './Answer.vue';
-import Editor from './other/Editor.vue';
+import Header from '../../components/Container/Header.vue';
+import Answer from '../../components/List/Answer.vue';
+import Editor from '../../components/Editor/Editor.vue';
 
-import { useQueStore } from '../other/store/quePinia';
-import { useUserStore } from '../other/store/userPinia';
-import { useNavStore } from '../other/store/navPinia';
+import { useQueStore } from '../../store/quePinia';
+import { useUserStore } from '../../store/userPinia';
+import { useNavStore } from '../../store/navPinia';
 import { computed, onMounted, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
 

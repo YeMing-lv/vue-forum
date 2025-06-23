@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import Header from './other/Header.vue';
-import QueList from './other/QueList.vue';
-import ArtList from './other/ArtList.vue';
-import { useNavStore } from '../other/store/navPinia';
-import { useQueStore } from '../other/store/quePinia';
-import { useArtStore } from '../other/store/artPinia';
+import Header from '../../components/Container/Header.vue';
+import QueList from '../../components/List/QueList.vue';
+import ArtList from '../../components/List/ArtList.vue';
+import { useNavStore } from '../../store/navPinia';
+import { useQueStore } from '../../store/quePinia';
+import { useArtStore } from '../../store/artPinia';
 
 const navStore = useNavStore();
 const queStore = useQueStore();

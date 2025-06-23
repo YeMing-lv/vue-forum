@@ -1,12 +1,10 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
-import myrequest from '../other/api/request';
-import Header from './other/Header.vue';
-import Editor from './other/Editor.vue';
-import { useNavStore } from '../other/store/navPinia';
+import Header from '../../components/Container/Header.vue';
+import Editor from '../../components/Editor/Editor.vue';
+import { useNavStore } from '../../store/navPinia';
 
-import { onBeforeUnmount, ref, shallowRef, onBeforeMount, reactive } from 'vue';
-
+import { onBeforeMount } from 'vue';
 
 const route = useRoute();
 const router = useRouter();

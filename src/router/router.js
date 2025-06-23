@@ -1,8 +1,6 @@
 import { createRouter } from "vue-router";
 import { createWebHistory } from "vue-router";
-import NotFound from "../components/NotFound.vue";
-import myrequest from "../other/api/request";
-import component from "element-plus/es/components/tree-select/src/tree-select-option.mjs";
+import myrequest from '../api/request';
 
 // vue-router路由表
 const routes = [
@@ -13,47 +11,42 @@ const routes = [
     {
         path: '/main',
         name: 'Main',
-        component: () => import("../components/Main.vue")
+        component: () => import("../views/Main/Main.vue")
     },
     {
         path: '/login',
         name: 'Login',
-        component: () => import("../components/Login.vue")
+        component: () => import("../views/Login/Login.vue")
     },
     {
         path: '/question',
         name: 'Question',
-        component: () => import("../components/Question.vue")
+        component: () => import("../views/QuestionDetail/QuestionDetail.vue")
     },
     {
         path: '/article',
         name: 'Article',
-        component: () => import("../components/Article.vue")
+        component: () => import("../views/Article/Article.vue")
     },
     {
         path: '/articleDetail',
         name: 'ArticleDetail',
-        component: () => import("../components/ArticleDetail.vue")
+        component: () => import("../views/ArticleDetail/ArticleDetail.vue")
     },
     {
         path: '/writting',
         name: 'Writting',
-        component: () => import("../components/Writing.vue")
-    },
-    {
-        path: '/test',
-        name: 'Test',
-        component: () => import("../components/Test.vue")
+        component: () => import("../views/Writing/Writing.vue")
     },
     {
         path: '/search',
         name: 'Search',
-        component: () => import("../components/Search.vue")
+        component: () => import("../views/Search/Search.vue")
     },
     {
         path: '/:pathMatch(.*)*',
         name: 'NotFound',
-        component: () => import("../components/NotFound.vue")
+        component: () => import("../views/NotFound/NotFound.vue")
     },
 ]
 

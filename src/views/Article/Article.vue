@@ -1,27 +1,24 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router';
-import Header from './other/Header.vue';
-import QueList from './other/QueList.vue';
-import { useQueStore } from '../other/store/quePinia';
-import { useNavStore } from '../other/store/navPinia';
-import { computed, onBeforeMount, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import Header from '../../components/Container/Header.vue';
+import ArtList from '../../components/List/ArtList.vue';
+import { useNavStore } from '../../store/navPinia';
+import { useArtStore } from '../../store/artPinia';
 
-const route = useRoute();
-const router = useRouter();
-const queStore = useQueStore();
 const navStore = useNavStore();
+const artStore = useArtStore();
 
-// 在页面挂载前 获取数据
+const articleList = computed(() => artStore.articleList);
+
+const activeMenuIndex = ref(0); // 内容列表导航栏索引
+
 onMounted(async () => {
-    navStore.headerNavActive = 1
-    await queStore.fetchQuestionList("recommend");
+    activeMenuIndex.value = 2;
+    navStore.headerNavActive = 2;
+    await artStore.fetchArticleList('recommend');
 })
 
-const questionList = computed(() => queStore.questionList);
-
-const activeMenuIndex = ref('2');
-
-// 导航栏 选择处理
+// 内容列表导航栏 选择处理
 const handleSelect = () => {
 
 }
@@ -29,17 +26,19 @@ const handleSelect = () => {
 </script>
 
 <template>
-    <div class="main">
-        <Header />
+    <div class="article">
+        <div>
+            <Header />
+        </div>
         <div class="container content">
-            <div class="content-question">
+            <div class="content-article">
                 <el-menu :default-active="activeMenuIndex" class="content-menu" mode="horizontal"
                     @select="handleSelect()">
                     <el-menu-item index="1" disabled>关注</el-menu-item>
                     <el-menu-item index="2">推荐</el-menu-item>
                     <el-menu-item index="3" disabled>热榜</el-menu-item>
                 </el-menu>
-                <QueList :question-list="questionList" />
+                <ArtList :article-list="articleList" />
             </div>
             <div class="content-aside">
                 其它
@@ -55,8 +54,8 @@ const handleSelect = () => {
             </div>
             <el-backtop :right="100" :bottom="100" />
         </div>
-        <!-- <el-footer style="border: 1px solid">Footer</el-footer> -->
     </div>
+
 </template>
 
 <style scoped>
@@ -66,7 +65,7 @@ const handleSelect = () => {
     margin: 10px auto;
 }
 
-.content-question {
+.content-article {
     flex-grow: 2;
     margin-right: 10px;
     padding: 10px;

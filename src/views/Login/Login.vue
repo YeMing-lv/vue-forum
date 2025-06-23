@@ -1,8 +1,8 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import myrequest from '../other/api/request';
-import { useUserStore } from '../other/store/userPinia';
+import myrequest from '../../api/request';
+import { useUserStore } from '../../store/userPinia';
 
 const route = useRoute();
 const router = useRouter();
