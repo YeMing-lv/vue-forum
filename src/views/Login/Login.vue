@@ -3,6 +3,7 @@ import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import myrequest from '../../api/request';
 import { useUserStore } from '../../store/userPinia';
+import Vcode from "vue3-puzzle-vcode";
 
 const route = useRoute();
 const router = useRouter();
@@ -13,6 +14,9 @@ const logAndRegFormRef = ref(); //表单实例（组件库自带的方法，不�
 const title = ref('登录'); //头部标题
 const isLogOrReg = ref(true); //登录和注册状态
 const pointer = ref(''); //底部提示词
+const ifShowVcode = ref(false); // 是否显示验证码
+const ifSuccessVcode = ref(false); // 是否通过验证码
+const numFailVcode = ref(0); // 验证失败次数
 const user = reactive({ //输入的用户信息
     name: '',
     account: '',
@@ -45,8 +49,11 @@ const handleButton = async (formEl) => {
     await formEl.validate((valid, fields) => {
         if (valid) {
             // console.log(user, 'submit');
-            if (isLogOrReg) {
 
+            // 滑动验证码验证
+            // ifShowVcode.value = true;
+
+            if (isLogOrReg.value && !ifSuccessVcode.value) {
                 //提交登录信息
                 userStore.userLogin(user.account, user.password).then(async () => {
 
@@ -55,8 +62,8 @@ const handleButton = async (formEl) => {
                     if (fetchLoginResult != null) {
                         //登录成功
 
-                        //获取用户个人信息外的一些数据
-                        //  获取用户的关注关系数据
+                        // 获取用户个人信息外的一些数据
+                        // 获取用户的关注关系数据
                         await userStore.fetchAttention(fetchLoginResult.userId);
 
                         //获取重定向地址，如果没有就直接跳转到首页
@@ -67,8 +74,7 @@ const handleButton = async (formEl) => {
                         pointer.value = "用户未注册";
                     }
                 })
-
-            } else {
+            } else if (!isLogOrReg.value && ifSuccessVcode.value) {
                 //提交注册信息
                 myrequest.userRegister(user.name, user.account, user.password).then(() => {
                     //注册成功
@@ -109,6 +115,24 @@ const resetForm = (formEl) => {
     formEl.resetFields();
 }
 
+// 滑动验证成功
+const handleSuccessVcode = () => {
+    ifSuccessVcode.value = true;
+    numFailVcode.value = 0;
+    handleCloseVcode();
+}
+
+// 滑动验证失败
+const handleFailVcode = () => {
+    numFailVcode.value = numFailVcode.value+1;
+    if (numFailVcode.value ) {
+        
+    }
+}
+
+// 滑动验证框关闭
+const handleCloseVcode = () => ifShowVcode.value = false;
+
 </script>
 
 <template>
@@ -141,6 +165,7 @@ const resetForm = (formEl) => {
                     </el-form>
                 </el-form>
                 <div class="pointer">{{ pointer }}</div>
+                <Vcode :show="ifShowVcode" @success="handleSuccessVcode" @fail="handleFailVcode" @close="handleCloseVcode"/>
                 <br>
                 <span>测试：xiaoming@example.com xiaoming123</span>
             </div>

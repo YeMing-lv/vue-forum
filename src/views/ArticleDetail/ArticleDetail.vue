@@ -1,14 +1,12 @@
 <script setup>
 import { onMounted, computed, ref } from 'vue';
 import Header from '../../components/Container/Header.vue';
-import Answer from '../../components/List/Answer.vue';
+import Answer from '../../components/List/AnswerList.vue';
 import Editor from '../../components/Editor/Editor.vue';
-import { useNavStore } from '../../store/navPinia';
 import { useUserStore } from '../../store/userPinia';
 import { useArtStore } from '../../store/artPinia';
 import { formatUTCtoLocal } from '../../utils/timeUtils';
 
-const navStore = useNavStore();
 const userStore = useUserStore();
 const artStore = useArtStore();
 
@@ -18,7 +16,7 @@ const author = computed(() => artStore.author);
 const ifEdit = ref(false); // 编辑器的显示
 
 onMounted(() => {
-    navStore.headerNavActive = 0;
+    
 })
 
 // 关注按钮的处理
@@ -28,9 +26,9 @@ const ifFollower = (id) => userStore.ifAttention(id);
 const changeFollower = async (attType, id) => {
     const ifF = ifFollower(id);
     if (ifF == true) {
-        await userStore.updateAttention('delete', attType, id);
+        await userStore.deleteAttention(attType, id);
     } else if (ifF == false) {
-        await userStore.updateAttention('post', attType, id);
+        await userStore.insertAttention(attType, id);
     }
 }
 
@@ -48,7 +46,7 @@ const editComplete = (data) => {
 
 <template>
     <div class="articleDetail">
-        <Header />
+        <Header headerNav="0" />
         <div class="container content">
             <div class="main">
                 <div class="main-title">{{ currentArticle.artTitle }}</div>

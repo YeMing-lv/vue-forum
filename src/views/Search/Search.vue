@@ -12,18 +12,14 @@ const queStore = useQueStore();
 const artStore = useArtStore();
 
 const searchKeyword = computed(() => navStore.searchKeyword);
-
 const questionList = computed(() => queStore.questionList);
-
 const articleList = computed(() => artStore.articleList);
 
-const activeMenuIndex = ref(0);
+const activeMenuIndex = ref('2');
 
 const hasSearch = ref(false);
 
 onMounted(() => {
-    activeMenuIndex.value = 2;
-    navStore.headerNavActive = 0;
     if (questionList.value != null) {
         hasSearch.value = true;
     }
@@ -47,7 +43,7 @@ const handleSelect = async (key, keyPath) => {
     <div class="search">
         <el-backtop :right="100" :bottom="100" />
         <div class="header">
-            <Header />
+            <Header headerNav="0" />
         </div>
         <el-menu :default-active="activeMenuIndex" class="content-menu" mode="horizontal" @select="handleSelect">
             <el-menu-item index="1" disabled>综合</el-menu-item>
@@ -57,8 +53,8 @@ const handleSelect = async (key, keyPath) => {
         </el-menu>
         <div class="container content">
             <div class="search-list">
-                <QueList v-if="hasSearch && activeMenuIndex === '2'" :question-list="questionList" />
-                <ArtList v-if="hasSearch && activeMenuIndex === '3'" :article-list="articleList" />
+                <QueList v-if="questionList != null && activeMenuIndex === '2'" :question-list="questionList" />
+                <ArtList v-if="articleList != null && activeMenuIndex === '3'" :article-list="articleList" />
             </div>
             <div class="aside">
                 其它

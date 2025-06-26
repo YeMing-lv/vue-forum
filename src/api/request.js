@@ -1,5 +1,4 @@
 import axios from "axios";
-import { te } from "element-plus/es/locales.mjs";
 
 //实例化axios
 const apiClient = axios.create({
@@ -96,24 +95,39 @@ apiClient.interceptors.response.use(
 
 export default {
 
-    // image接口
+    // =========================image接口=======================
     async deleteImage(imagePath) {
         const response = await apiClient.delete(`/image?imagePath=${imagePath}`);
         return response.data;
     },
 
-    // user用户接口
+    // ========================user用户接口====================
     async fetchUserById(userId) {
         const response = await apiClient.get(`/user/${userId}`);
         return response.data;
     },
+
+    /**
+     * 用户登录
+     * @param {*} account 
+     * @param {*} password 
+     * @returns 
+    */
     async userLogin(account, password) {
         const response = await apiClient.post('/user/login', {
-            account,
-            password
+            userAccount: account,
+            userPassword: password
         });
         return response.data;
     },
+
+    /**
+     * 用户注册
+     * @param {*} name 
+     * @param {*} account 
+     * @param {*} password 
+     * @returns 
+     */
     async userRegister(name, account, password) {
         const response = await apiClient.post('/user/register', {
             name,
@@ -122,8 +136,14 @@ export default {
         });
         return response.data;
     },
+
+    /**
+     * 检查Token
+     * @param {*} token 
+     * @returns 
+     */
     async checkToken(token) {
-        const response = await apiClient.get(`/user/token`);
+        const response = await apiClient.get(`/checktoken`);
         return response.data;
     },
 
@@ -132,21 +152,38 @@ export default {
         const response = await apiClient.get(`/attention/following/${id}`);
         return response.data;
     },
-    async updateAttention(postOrDelete, attFollower, attType, attFollowed) {
-        if (postOrDelete == 'post') {
-            const response = await apiClient.post(`/attention`, {
-                attFollower,
-                attType,
-                attFollowed
-            });
-        } else if (postOrDelete == 'delete') {
-            const response = await apiClient.delete(`/attention?attFollower=${attFollower}&attType=${attType}&attFollowed=${attFollowed}`);
-        } else {
-            return 'updateAttention的postOrDelete属性输入错误'
-        }
+
+    /**
+     * 插入或删除 关注关系
+     * @param {*} attFollower 
+     * @param {*} attType 
+     * @param {*} attFollowed 
+     * @returns 
+     */
+    async insertAttention(attFollower, attType, attFollowed) {
+        const response = await apiClient.post(`/attention`, {
+            attFollower,
+            attType,
+            attFollowed
+        });
+        return response.data;
     },
 
-    // question话题接口
+    /**
+     * 删除 关注关系
+     * @param {*} attId 
+     */
+    async deleteAttention(attId) {
+        const response = await apiClient.delete(`/attention/${attId}`);
+        return response.data;
+    },
+
+    // ==============question话题接口==================
+    /**
+     * 获取指定种类 话题列表
+     * @param {*} listType 
+     * @returns 
+     */
     async fetchQuestionList(listType) {
         let response = null;
         if (listType === "recommend") { // 获取推荐话题列表
@@ -154,18 +191,40 @@ export default {
             return response.data;
         }
     },
-    // 获取话题查询结果
+
+    /**
+     * 获取话题查询结果
+     * @param {*} keyword 
+     * @returns 
+     */
     async fetchSearchQuestionList(keyword) {
         const response = await apiClient.get(`/question/search/${keyword}`);
         return response.data;
     },
+
+    /**
+     * 获取指定ID话题 作者详情
+     * @param {*} id 
+     * @returns 
+     */
     async fetchCurrentQuestion(id) {
         const queResponse = await apiClient.get(`/question/${id}`);
-        const autResponse = await apiClient.get(`/user/${queResponse.data.queAuthorId}`);
-        const result = { queResponse, autResponse };
+        const autResponse = await apiClient.get(`/user/${queResponse.data.data.queAuthorId}`);
+        const result = {
+            queResponse: queResponse.data,
+            autResponse: autResponse.data
+        };
         return result;
     },
-    async insertQuestion(queTitle, queContent, queAuthorId) { // 新建 question
+
+    /**
+     * 新建 话题
+     * @param {*} queTitle 
+     * @param {*} queContent 
+     * @param {*} queAuthorId 
+     * @returns 
+     */
+    async insertQuestion(queTitle, queContent, queAuthorId) {
         const response = await apiClient.post(`/question`, {
             queTitle,
             queContent,
@@ -174,35 +233,45 @@ export default {
         return response.data;
     },
 
+    /**
+     * 增加话题 的浏览数
+     * @param {*} id 
+     */
+    async increaseQueBrowseNum(id) {
+        const response = await apiClient.put(`/question/${id}/browse`);
+        return response.data;
+    },
+
     // question的answer回答接口
     async fetchQueAnswerList(id) {
         const response = await apiClient.get(`/answer/question/${id}`);
         return response.data;
     },
-    async updateLikeNum(type, upOrdown, id) {
+
+    /**
+     * 更新指定对象 点赞数
+     */
+    async updateLikeNum(type, id, likeNum) {
         if (type == 'answer') {
-            if (upOrdown == 'up') {
-                const response = await apiClient.post(`/answer/${id}/like`);
-                return response.data;
-            } else if (upOrdown == 'down') {
-                const response = await apiClient.delete(`/answer/${id}/like`);
-                return response.data;
-            }
+            const response = await apiClient.put(`/answer/${id}/like?likeNum=${likeNum}`);
+            return response.data;
         } else if (type == 'question') {
-            if (upOrdown == 'up') {
-                const response = await apiClient.post(`/question/${id}/like`);
-                return response.data;
-            } else if (upOrdown == 'down') {
-                const response = await apiClient.delete(`/question/${id}/like`);
-                return response.data;
-            }
+            const response = await apiClient.put(`/question/${id}/like?likeNum=${likeNum}`);
+            return response.data;
         }
         return 'failed updateLikeNum';
     },
 
     // answer 回答接口
+    /**
+     * 插入新回答
+     * @param {*} ansAuthorId 
+     * @param {*} ansQueId 
+     * @param {*} ansContent 
+     * @returns 
+     */
     async insertAnswer(ansAuthorId, ansQueId, ansContent) {
-        const response = await apiClient.post(`/answer`,{
+        const response = await apiClient.post(`/answer`, {
             ansAuthorId,
             ansQueId,
             ansContent
@@ -219,28 +288,54 @@ export default {
             draContent
         });
     },
-    async fetchQueDraft(userId) {
-        const response = await apiClient.get(`/draft/question/${userId}`);
+
+    /**
+     * 获取指定 种类草稿箱
+     * @param {*} userId 
+     * @returns 
+     */
+    async fetchDraft(id, type) {
+        const response = await apiClient.get(`/draft?authorId=${id}&type=${type}`);
         return response.data;
     },
-    async fetchAnsDraft(userId) {
-        const response = await apiClient.get(`/draft/answer/${userId}`);
-        return response.data;
-    },
+
+    /**
+     * 删除 草稿
+     * @param {*} draId 
+     * @returns 
+     */
     async deleteDraft(draId) {
         const response = await apiClient.delete(`/draft/${draId}`);
         return response.data;
     },
-    
-    // article 文章接口
+
+    // ===========================article 文章接口==========================
+    /**
+     * 获取推荐 文章列表
+     * @returns 
+     */
     async fetchRecommendArticle() {
         const response = await apiClient.get(`/article/recommend`);
         return response.data;
     },
+
+    /**
+     * 关键词搜索 文章列表
+     * @param {*} keyword 
+     * @returns 
+     */
     async fetchSearchArticleList(keyword) {
         const response = await apiClient.get(`/article/search/${keyword}`);
         return response.data;
     },
+
+    /**
+     * 创建 文章
+     * @param {*} artAuthorId 
+     * @param {*} artTitle 
+     * @param {*} artContent 
+     * @returns 
+     */
     async createArticle(artAuthorId, artTitle, artContent) {
         const response = await apiClient.post(`/article`, {
             artAuthorId,
@@ -249,19 +344,19 @@ export default {
         });
         return response.data;
     },
+    
+    /**
+     * 更新文章点赞
+     * @param {*} artId 
+     * @param {*} artLikeNum 
+     * @returns 
+     */
     async updateArticleLikeNum(artId, artLikeNum) {
         const response = await apiClient.put(`/article/like`, {
             artId,
             artLikeNum
         });
         return response.data;
-    },
-
-    // test和option 题库接口
-    async fetchTestAndOption() {
-        const test = await apiClient.get(`/test`);
-        const option = await apiClient.get(`/option`);
-        const response = { test, option };
-        return response;
     }
+
 }

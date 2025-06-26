@@ -25,24 +25,32 @@ export const useArtStore = defineStore('article', {
         // 获取文章作者
         async fetchArticleAuthor(artAuthorId) {
             const result = await myrequest.fetchUserById(artAuthorId);
-            this.author = result;
+            if (result.code === 200) {
+                this.author = result.data;
+            }
         },
         // 获取指定种类的文章列表
         async fetchArticleList(listType) {
             if (listType === 'recommend') {
                 const result = await myrequest.fetchRecommendArticle();
-                this.articleList = result;
+                if (result.code === 200) {
+                    this.articleList = result.data;
+                }
             }
         },
         // 获取关键词搜索到的文章列表
         async fetchSearchArticleList(keyword) {
             const result = await myrequest.fetchSearchArticleList(keyword);
-            this.articleList = result;
+            if (result.code === 200) {
+                this.articleList = result.data;
+            }
         },
-        // 更新文章点赞数
+        // 更新文章点赞数 ????????
         async updateArticleLikeNum(artId, artLikeNum) {
             const result = await myrequest.updateArticleLikeNum(artId, artLikeNum);
-            this.currentArticle.artLikeNum = artLikeNum;
+            if (result.code === 200) {
+                this.currentArticle.artLikeNum = artLikeNum;
+            }
         }
     },
     persist: true

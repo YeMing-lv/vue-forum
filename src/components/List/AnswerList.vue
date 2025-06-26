@@ -35,9 +35,9 @@ const ifFollower = (id) => userStore.ifAttention(id);
 const changeFollower = async (attType, id) => {
     const ifF = ifFollower(id);
     if (ifF == true) {
-        await userStore.updateAttention('delete', attType, id);
+        await userStore.deleteAttention(attType, id);
     } else if (ifF == false) {
-        await userStore.updateAttention('post', attType, id);
+        await userStore.insertAttention(attType, id);
     }
 }
 

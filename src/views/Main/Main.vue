@@ -3,17 +3,14 @@ import { useRoute, useRouter } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import QueList from '../../components/List/QueList.vue';
 import { useQueStore } from '../../store/quePinia';
-import { useNavStore } from '../../store/navPinia';
 import { computed, onMounted, ref } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
 const queStore = useQueStore();
-const navStore = useNavStore();
 
 // 在页面挂载前 获取数据
 onMounted(async () => {
-    navStore.headerNavActive = 1
     await queStore.fetchQuestionList("recommend");
 })
 
@@ -30,7 +27,7 @@ const handleSelect = () => {
 
 <template>
     <div class="main">
-        <Header />
+        <Header headerNav="1" />
         <div class="container content">
             <div class="content-question">
                 <el-menu :default-active="activeMenuIndex" class="content-menu" mode="horizontal"

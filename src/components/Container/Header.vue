@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useUserStore } from '../../store/userPinia';
-import { useNavStore } from '../../store/navPinia';
 import { useQueStore } from '../../store/quePinia';
 import { useAnsStore } from '../../store/ansPinia';
 import { useRoute, useRouter } from 'vue-router';
@@ -10,19 +9,20 @@ import { Search, BellFilled, Comment, Avatar, Setting, SwitchButton } from '@ele
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const navStore = useNavStore();
 const queStore = useQueStore();
 const ansStore = useAnsStore();
 
-const headerNavActive = computed(() => navStore.headerNavActive);
+const props = defineProps(['headerNav']);
+const headerNavActive = computed(() => props.headerNav);
 const userHeadImage = computed(() => userStore.user.userHead);
 const autoComQuestionList = computed(() => queStore.searchAutoCompleteQuestionList);
 
 // 输入框输入
 const searchInput = ref('');
 
-// 从服务器获取的 查询结果列表
-const links = ref();
+onMounted(() => {
+    // console.log(headerNavActive.value)
+})
 
 // 退出登录
 const outLogin = () => {
@@ -51,16 +51,10 @@ const handleSearchSelect = async (item) => {
         )
         router.push('/question');
     } else if (item.value !== '') {
-        navStore.searchKeyword = item.value; // 存储关键词输入
-        await queStore.fetchSearchQuestionList(item.value).then(() => {
-            router.push('/search');
-        })
+        await queStore.fetchSearchQuestionList(item.value);
+        router.push('/search'); // ?????????设置带参数keyword
     }
 }
-
-onMounted(() => {
-    // console.log(headerNavActive.value)
-})
 
 </script>
 
@@ -72,11 +66,11 @@ onMounted(() => {
             </div>
             <div class="header-nav">
                 <ul>
-                    <li :class="{ active: headerNavActive === 1 }"><router-link to="/main"
+                    <li :class="{ active: headerNavActive === '1' }"><router-link to="/main"
                             style="color: inherit;">首页</router-link></li>
-                    <li :class="{ active: headerNavActive === 2 }"><router-link to="/article"
+                    <li :class="{ active: headerNavActive === '2' }"><router-link to="/article"
                             style="color: inherit;">文章</router-link></li>
-                    <li :class="{ active: headerNavActive === 3 }"><router-link to="/writting"
+                    <li :class="{ active: headerNavActive === '3' }"><router-link to="/writting"
                             style="color: inherit;">创作</router-link></li>
                 </ul>
             </div>
@@ -87,12 +81,12 @@ onMounted(() => {
             </div>
             <div class="header-user">
                 <ul>
-                    <!-- <li><el-icon>
+                    <li><el-icon>
                             <BellFilled />
                         </el-icon>消息</li>
                     <li><el-icon>
                             <Comment />
-                        </el-icon>私信</li> -->
+                        </el-icon>私信</li>
                     <li>
                         <el-popover placement="bottom" trigger="click">
                             <div class="header-user-head"><el-icon>

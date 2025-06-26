@@ -1,17 +1,15 @@
 <script setup>
 import Header from '../../components/Container/Header.vue';
-import Answer from '../../components/List/Answer.vue';
+import AnswerList from '../../components/List/AnswerList.vue';
 import Editor from '../../components/Editor/Editor.vue';
 
 import { useQueStore } from '../../store/quePinia';
 import { useUserStore } from '../../store/userPinia';
-import { useNavStore } from '../../store/navPinia';
 import { computed, onMounted, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
 
 const queStore = useQueStore();
 const userStore = useUserStore();
-const navStore = useNavStore();
 
 // 当前话题的数据
 const currentQuestion = computed(() => queStore.currentQuestion);
@@ -28,7 +26,11 @@ const ifEdit = ref(false);
 
 onMounted(() => {
     // console.log(queStore.value)
-    navStore.headerNavActive = 0;
+
+    // 进入详情页自动增加话题浏览数
+    if (queStore.currentQuestion != null) {
+        queStore.increaseQueBrowseNum(queStore.currentQuestion.queId);
+    }
 });
 
 // 关注按钮的处理
@@ -37,10 +39,10 @@ const ifFollower = (id) => userStore.ifAttention(id);
 // 更改关注关系
 const changeFollower = async (attType, id) => {
     const ifF = ifFollower(id);
-    if (ifF == true) {
-        await userStore.updateAttention('delete', attType, id);
-    } else if (ifF == false) {
-        await userStore.updateAttention('post', attType, id);
+    if (ifF === true) {
+        await userStore.deleteAttention(attType, id);
+    } else if (ifF === false) {
+        await userStore.insertAttention(attType, id);
     }
 }
 
@@ -65,7 +67,7 @@ const handleEditor = (data) => {
 
 <template>
     <div class="question">
-        <Header />
+        <Header headerNav="0"/>
 
         <div class="que-header">
             <div class="que-header-left">
@@ -84,7 +86,7 @@ const handleEditor = (data) => {
                         </el-icon>{{ ifEdit ? "编辑回答" : "写回答" }}</el-button>
                     <div class="like">
                         <el-button text @click="agree(currentQuestion.queId)">
-                            <img src="../../public/image/like.png" alt="like">
+                            <img src="/public/image/like.png" alt="like">
                             点赞{{ currentQuestion.queLikeNum }}
                         </el-button>
                     </div>
@@ -103,7 +105,7 @@ const handleEditor = (data) => {
 
         <div class="container que-content">
             <div class="que-answer">
-                <Answer />
+                <AnswerList />
             </div>
             <div class="que-aside">
                 <div class="aside-author">

@@ -2,19 +2,15 @@
 import { computed, onMounted, ref } from 'vue';
 import Header from '../../components/Container/Header.vue';
 import ArtList from '../../components/List/ArtList.vue';
-import { useNavStore } from '../../store/navPinia';
 import { useArtStore } from '../../store/artPinia';
 
-const navStore = useNavStore();
 const artStore = useArtStore();
 
 const articleList = computed(() => artStore.articleList);
 
-const activeMenuIndex = ref(0); // 内容列表导航栏索引
+const activeMenuIndex = ref('2'); // 内容列表导航栏索引
 
 onMounted(async () => {
-    activeMenuIndex.value = 2;
-    navStore.headerNavActive = 2;
     await artStore.fetchArticleList('recommend');
 })
 
@@ -28,7 +24,7 @@ const handleSelect = () => {
 <template>
     <div class="article">
         <div>
-            <Header />
+            <Header headerNav="2" />
         </div>
         <div class="container content">
             <div class="content-article">

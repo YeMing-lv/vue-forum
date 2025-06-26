@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onBeforeMount, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { useUserStore } from '../../store/userPinia';
 
@@ -19,6 +19,15 @@ const prop = defineProps(['draftType']);
 const emit = defineEmits(['editDraft']);
 
 const activeNullDraft = ref(false);
+
+onMounted(async () => {
+    // 获取登录用户的 草稿
+    await userStore.fetchDraft(prop.draftType).then(() => {
+        if (userStore.queDraft.length == 0) { // 没有草稿
+            activeNullDraft.value = true;
+        }
+    });
+})
 
 // 编辑 点击事件
 const edit = (draft) => {
@@ -40,23 +49,6 @@ const deleteDraft = async (draId) => {
         }
     }
 }
-
-onBeforeMount(async () => {
-    // 获取登录用户的 草稿
-    if (prop.draftType === 'question') {
-        await userStore.fetchQueDraft().then(() => {
-            if (userStore.queDraft.length == 0) { // 没有草稿
-                activeNullDraft.value = true;
-            }
-        });
-    } else {
-        await userStore.fetchAnsDraft().then(() => {
-            if (userStore.ansDraft.length == 0) { // 没有草稿
-                activeNullDraft.value = true;
-            }
-        });
-    }
-})
 
 </script>
 

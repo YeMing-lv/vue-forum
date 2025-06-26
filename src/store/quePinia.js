@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import myrequest from '../api/request';
+import { ref } from "vue";
 
 export const useQueStore = defineStore('que', {
     state: () => ({
@@ -22,36 +23,96 @@ export const useQueStore = defineStore('que', {
         deleteAgreedQuestion(queId) {
             this.questionIsAgree = this.questionIsAgree.filter(item => item !== queId);
         },
-        // 获取 指定种类 话题列表数据
+
+        /**
+         * 获取指定种类 话题列表 及对应最新回答
+         * @param {*} listType 
+         * @returns 
+         */
         async fetchQuestionList(listType) {
             const result = await myrequest.fetchQuestionList(listType);
-            this.questionList = result;
+            this.questionList = result.data;
 
             // 获取搜索框 补全输入列表
             if (listType === 'recommend') {
-                const myResult = result.slice(0, 6);
+                const myResult = result.data.slice(0, 6);
                 this.searchAutoCompleteQuestionList = myResult.map(item => item.question);
             }
-            return result;
         },
-        // 获取 搜索 话题列表
+
+        /**
+         * 获取搜索 话题列表
+         * @param {*} keyword 
+         */
         async fetchSearchQuestionList(keyword) {
             const result = await myrequest.fetchSearchQuestionList(keyword);
-            this.questionList = result;
-            console.log(this.questionList);
+            this.questionList = result.data;
         },
+        
+        /**
+         * 获取指定ID话题详情
+         * @param {*} id 
+         */
         async fetchCurrentQuestion(id) {
             const result = await myrequest.fetchCurrentQuestion(id);
             this.currentQuestion = result.queResponse.data;
             this.author = result.autResponse.data;
         },
+
+        /**
+         * 更新话题的点赞数
+         * @param {} upOrdown 
+         * @param {*} id 
+         */
         async updateQuestionLikeNum(upOrdown, id) {
-            const result = await myrequest.updateLikeNum('question', upOrdown, id);
-            this.currentQuestion.queLikeNum = result.queLikeNum;
+            const likeNum = ref(this.currentQuestion);
+            if (upOrdown === 'up') {
+                const result = await myrequest.updateLikeNum('question', id, likeNum.value.queLikeNum + 1);
+                if (result.data === 1) {
+                    likeNum.value.queLikeNum ++;
+                }
+            } else if (upOrdown === 'down') {
+                const result = await myrequest.updateLikeNum('question', id, likeNum.value.queLikeNum - 1);
+                if (result.data === 1) {
+                    likeNum.value.queLikeNum --;
+                }
+            }
         },
-        async updateAnswerLikeNum(upOrdown, id, listType) {
-            const result = await myrequest.updateLikeNum('answer', upOrdown, id);
-            this.questionList[this.questionList.findIndex(item => item.answer.ansId === id)].answer = result;
+
+        /**
+         * 更新回答的点赞数
+         * @param {*} upOrDown 
+         * @param {*} id 
+         */
+        async updateAnswerLikeNum(upOrDown, id) {
+            const updateAnswer = ref(this.questionList[this.questionList.findIndex(item => item.answer.ansId === id)].answer);
+            const likeNum = updateAnswer.value.ansLikeNum;
+
+            if (upOrDown === "up") {
+                const result = await myrequest.updateLikeNum('answer', id, likeNum + 1);
+                if (result.data === 1) {
+                    updateAnswer.value.ansLikeNum++;
+                }
+            } else if (upOrDown === "down") {
+                const result = await myrequest.updateLikeNum('answer', id, likeNum - 1);
+                if (result.data === 1) {
+                    updateAnswer.value.ansLikeNum--;
+                }
+            }
+        },
+
+        /**
+         * 增加话题 的浏览数
+         * @param {*} id 
+         */
+        async increaseQueBrowseNum(id) {
+            const result = await myrequest.increaseQueBrowseNum(id);
+
+            if (result.code === 200) {
+                if (result.data > 0) {
+                    this.currentQuestion.queBrowseNum++;
+                }
+            }
         }
     },
     persist: true

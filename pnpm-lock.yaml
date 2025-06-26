@@ -41,6 +41,9 @@ importers:
       vue-router:
         specifier: ^4.5.1
         version: 4.5.1(vue@3.5.14)
+      vue3-puzzle-vcode:
+        specifier: ^1.1.7
+        version: 1.1.7
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.2.3
@@ -1105,6 +1108,9 @@ packages:
     peerDependencies:
       vue: ^3.2.0
 
+  vue3-puzzle-vcode@1.1.7:
+    resolution: {integrity: sha512-mW780dz7HKjrElnE60CeYSeHGidKBKHoMjTDYfqF21330rTkFOsfDK1FQKZ22MktgMtTEoS/imfpEDlM1cxY/g==}
+
   vue@3.5.14:
     resolution: {integrity: sha512-LbOm50/vZFG6Mhy6KscQYXZMQ0LMCC/y40HDJPPvGFQ+i/lUH+PJHR6C3assgOQiXdl6tAfsXHbXYVBZZu65ew==}
     peerDependencies:
@@ -2137,6 +2143,8 @@ snapshots:
     dependencies:
       '@vue/devtools-api': 6.6.4
       vue: 3.5.14
+
+  vue3-puzzle-vcode@1.1.7: {}
 
   vue@3.5.14:
     dependencies:

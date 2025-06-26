@@ -2,20 +2,18 @@
 import { useRoute, useRouter } from 'vue-router';
 import myrequest from '../../api/request';
 import Draft from '../../components/List/Draft.vue';
-import { useNavStore } from '../../store/navPinia';
 import { useUserStore } from '../../store/userPinia';
 import { useQueStore } from '../../store/quePinia';
 import { useAnsStore } from '../../store/ansPinia';
 
 import '@wangeditor/editor/dist/css/style.css';
-import { onBeforeUnmount, ref, shallowRef, onBeforeMount, reactive, computed, watch } from 'vue';
+import { onBeforeUnmount, ref, shallowRef, onMounted, reactive, watch } from 'vue';
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
 
 import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
-const navStore = useNavStore();
 const userStore = useUserStore();
 const queStore = useQueStore();
 const ansStore = useAnsStore();
@@ -39,11 +37,21 @@ const ifSaveDraft = ref(false); // 当前是否已 保存草稿
 
 // 编辑器动态样式 ???
 
-onBeforeMount(async () => {
-    if (prop.editorType === 'question') {
-        navStore.headerNavActive = 3;
-    }
+onMounted(async () => {
+    // 获取指定种类草稿箱
+    userStore.fetchDraft(prop.editorType);
+
     console.log(localStorage.getItem("token"));
+});
+
+// 退出页面 确认是否保存草稿
+// 组件销毁前，要及时销毁编辑器，重要！
+onBeforeUnmount(() => {
+    const editor = editorRef.value;
+    if (editor == null) return;
+
+    deleteNotusedImage();
+    editor.destroy();
 });
 
 // 工具栏配置 和 编辑器配置
@@ -73,17 +81,6 @@ const editorConfig = {
         }
     }
 };
-
-// 退出页面 确认是否保存草稿
-// 组件销毁前，要及时销毁编辑器，重要！
-onBeforeUnmount(() => {
-    const editor = editorRef.value;
-    if (editor == null) return;
-
-    deleteNotusedImage();
-    editor.destroy();
-});
-
 
 // 编辑器回调函数
 const handleCreated = (editor) => {
@@ -136,8 +133,8 @@ const publish = async () => {
         await myrequest.insertQuestion(titleText.value, valueHtml.value, userStore.user.userId).then(async (response) => {
             if (response != null) {
                 // 跳转到 Question 页面并显示新话题
-                await queStore.fetchCurrentQuestion(response.queId).then(
-                    ansStore.fetchQueAnswerList(response.queId)
+                await queStore.fetchCurrentQuestion(response.data.queId).then(
+                    ansStore.fetchQueAnswerList(response.data.queId)
                 );// 获取新话题的数据
 
                 router.push('/question');

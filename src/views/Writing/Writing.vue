@@ -2,18 +2,13 @@
 import { useRoute, useRouter } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import Editor from '../../components/Editor/Editor.vue';
-import { useNavStore } from '../../store/navPinia';
-
-import { onBeforeMount } from 'vue';
+import { onMounted } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
-const navStore = useNavStore();
 
-onBeforeMount(async () => {
-    navStore.headerNavActive = 3;
+onMounted(() => {
     console.log(localStorage.getItem("token"));
-
 });
 
 </script>
@@ -21,7 +16,7 @@ onBeforeMount(async () => {
 <template>
     <div class="writting">
         <el-backtop :right="100" :bottom="100" />
-        <Header />
+        <Header headerNav="3"/>
         <Editor editor-type="question" />
     </div>
 </template>
