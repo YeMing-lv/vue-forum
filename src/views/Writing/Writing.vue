@@ -8,7 +8,7 @@ const route = useRoute();
 const router = useRouter();
 
 onMounted(() => {
-    console.log(localStorage.getItem("token"));
+    // console.log(localStorage.getItem("token"));
 });
 
 </script>
@@ -16,8 +16,10 @@ onMounted(() => {
 <template>
     <div class="writting">
         <el-backtop :right="100" :bottom="100" />
-        <Header headerNav="3"/>
-        <Editor editor-type="question" />
+        <Header headerNav="3" />
+        <div class="container">
+            <Editor editor-type="question" />
+        </div>
     </div>
 </template>
 
@@ -28,5 +30,4 @@ onMounted(() => {
     overflow: visible;
     /* 防止溢出限制定位 */
 }
-
 </style>

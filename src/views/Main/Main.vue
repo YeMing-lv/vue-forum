@@ -2,19 +2,26 @@
 import { useRoute, useRouter } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import QueList from '../../components/List/QueList.vue';
-import { useQueStore } from '../../store/quePinia';
-import { computed, onMounted, ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
-const queStore = useQueStore();
 
-// 在页面挂载前 获取数据
-onMounted(async () => {
-    await queStore.fetchQuestionList("recommend");
-})
+/** 目前 目前首页 又或者是所有页面
+ * 大多都不需要进行数据的获取，发送请求
+ * 因为数据的展示大多都在固定的组件，所以也为了方便直接获取数据、设置加载动画等
+ * 要求数据获取、处理等多在组件，而不是页面
+ * 页面只需要 props 传参数设置，接收 emits 等即可
+ * 有了Pinia，project都没什么用。
+ * 对了
+ * 记得组件对于经常要复用的变量，要在组件取消挂载式，销毁数据
+ * 节省内存
+ */
 
-const questionList = computed(() => queStore.questionList);
+/**
+ * 这生命周期钩子函数，在页面刷新的时候不会调用的！！！！！
+ */
+// onUnmounted()
 
 const activeMenuIndex = ref('2');
 
@@ -36,7 +43,7 @@ const handleSelect = () => {
                     <el-menu-item index="2">推荐</el-menu-item>
                     <el-menu-item index="3" disabled>热榜</el-menu-item>
                 </el-menu>
-                <QueList :question-list="questionList" />
+                <QueList type="recommend" />
             </div>
             <div class="content-aside">
                 <div>
@@ -51,7 +58,6 @@ const handleSelect = () => {
             </div>
             <el-backtop :right="100" :bottom="100" />
         </div>
-        <el-footer style="border: 1px solid">Footer</el-footer>
     </div>
 </template>
 

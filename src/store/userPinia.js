@@ -1,23 +1,27 @@
 import { defineStore } from "pinia";
 import myrequest from '../api/request';
 import { useQueStore } from "./quePinia";
+import { useArtStore } from "./artPinia";
 
 const queStore = useQueStore();
+const artStore = useArtStore();
 
 export const useUserStore = defineStore('user', {
     state: () => ({
         user: null,
         attention: null,
-        queDraft: null,
-        ansDraft: null
+        queDraft: [],
+        ansDraft: []
     }),
     actions: {
-        initUserStore() {
+        initUser() {
             this.user = null;
-            this.attention = null
+            this.attention = null;
+            this.initDraft();
         },
-        cleanUser() {
-            this.user = null;
+        initDraft() {
+            this.queDraft = [];
+            this.ansDraft = [];
         },
 
         /**
@@ -91,21 +95,23 @@ export const useUserStore = defineStore('user', {
          * @param {*} attType 
          * @param {*} attFollowed 
          */
-        async insertAttention(attType, attFollowed) {
+        async insertAttention(attType, attFollowed, parentType) {
             const result = await myrequest.insertAttention(this.user.userId, attType, attFollowed);
 
-            if (result.code === 200) {
-                // 1.插入关注关系
-                this.attention.push(result.data.attention);
-                // 2.更新关注者的关注数
-                if (result.data.row > 0) {
-                    if (attType === "user") {
-                        queStore.author.userFollowersNum++;
-                    } else if (attType === "question") {
-                        queStore.currentQuestion.queAtteNum++;
-                    }
-                }
+            if (result.code !== 200) {
+                return false;
             }
+            // 1.插入关注关系
+            this.attention.push(result.data.attention);
+            // 2.返回参数 更新本地作者数据
+            if (attType === 'question') { // 关注话题 更新话题关注数
+                queStore.currentQuestion.queAtteNum++;
+            } else if (attType === 'user' && parentType === 'question') { // 关注话题作者 更新作者关注数
+                queStore.author.userFollowersNum++;
+            } else if (attType === 'user' && parentType === 'article') { // 关注文章作者 更新作者关注数
+                artStore.author.userFollowersNum++;
+            } // 其它：关注回答作者 不用更新数量
+            return true;
         },
 
         /**
@@ -113,28 +119,29 @@ export const useUserStore = defineStore('user', {
          * @param {*} attType
          * @param {*} attId 
          */
-        async deleteAttention(attType, id) {
+        async deleteAttention(attType, id, parentType) {
             // 找到指定被关注者ID的关注关系
             const attId = this.attention.find(item => item.attFollowed === id).attId;
+            if (attId == null) return false;
 
             const result = await myrequest.deleteAttention(attId);
+            console.log(result);
 
             // 先验证
-            if (result.code === 200) {
-                // 1.删除关注关系
-                this.attention = this.attention.filter(item => item.attId != attId);
-                // 2.更新被关注者的关注数
-                if (result.data > 0) {
-                    console.log(111)
-                    if (attType === "user") {
-                        queStore.author.userFollowersNum--;
-
-                    } else if (attType === "question") {
-                        queStore.currentQuestion.queAtteNum--;
-                    }
-                }
+            if (result.code !== 200) {
+                return false;
             }
-
+            // 1.删除关注关系
+            this.attention = this.attention.filter(item => item.attId != attId);
+            // 2.返回参数 更新本地作者数据
+            if (attType === 'question') { // 关注话题 更新话题关注数
+                queStore.currentQuestion.queAtteNum--;
+            } else if (attType === 'user' && parentType === 'question') { // 关注话题作者 更新作者关注数
+                queStore.author.userFollowersNum--;
+            } else if (attType === 'user' && parentType === 'article') { // 关注文章作者 更新作者关注数
+                artStore.author.userFollowersNum--;
+            } // 其它：关注回答作者 不用更新数量
+            return true;
         }
     },
     persist: true

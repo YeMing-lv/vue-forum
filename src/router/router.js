@@ -2,7 +2,9 @@ import { createRouter } from "vue-router";
 import { createWebHistory } from "vue-router";
 import myrequest from '../api/request';
 
-// vue-router路由表
+/** vue-router路由表
+ * 路由用 query 传递参数
+ * */
 const routes = [
     {
         path: '/',
@@ -57,7 +59,7 @@ const router = createRouter({
 
 // 路由跳转依据 token 做登录验证
 router.beforeEach(async (to, from, next) => {
-    if (to.path === '/login') { // 如果跳转到登录页面就清除token和user登录用户数据
+    if (to.path === '/login') { // 如果跳转到登录页面就清除token 登录用户数据就没法在这改了
         localStorage.removeItem("token");
         next();
     } else {
@@ -69,15 +71,14 @@ router.beforeEach(async (to, from, next) => {
             next({ name: 'Login', query: { redirect: to.fullPath } });
         } else {
             // 发送请求校验 token 是否正确
-            const response = await myrequest.checkToken(token);
-
-            if (response.code === '500' && response.msg === "token认证失败") {
-                console.log('token校验失败');
-                next({ name: 'Login', query: { redirect: to.fullPath } });
-            } else {
-                next();
-            }
-            
+            await myrequest.checkToken().then((response) => {
+                if (response.code != 200) {
+                    console.log('token校验失败');
+                    next({ name: 'Login', query: { redirect: to.fullPath } });
+                } else {
+                    next();
+                }
+            });
         }
     }
 });

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import myrequest from '../../api/request';
 import { useUserStore } from '../../store/userPinia';
@@ -17,11 +17,15 @@ const pointer = ref(''); //底部提示词
 const ifShowVcode = ref(false); // 是否显示验证码
 const ifSuccessVcode = ref(false); // 是否通过验证码
 const numFailVcode = ref(0); // 验证失败次数
-const user = reactive({ //输入的用户信息
+const user = reactive({ // 输入的用户信息
     name: '',
     account: '',
     password: '',
 });
+
+onMounted(() => {
+    userStore.initUser(); // 清除UserStore token在路由守卫里就清除了
+})
 
 //切换登录和注册状态
 function logOrReg() {
@@ -74,11 +78,11 @@ const handleButton = async (formEl) => {
                         pointer.value = "用户未注册";
                     }
                 })
-            } else if (!isLogOrReg.value && ifSuccessVcode.value) {
+            } else if (!isLogOrReg.value && !ifSuccessVcode.value) {
                 //提交注册信息
-                myrequest.userRegister(user.name, user.account, user.password).then(() => {
+                myrequest.userRegister(user.name, user.account, user.password).then((result) => {
                     //注册成功
-                    if (registerUserResult.success == true) {
+                    if (result.code === 200) {
                         logOrReg();
                         pointer.value = "用户注册成功";
                     }
@@ -96,7 +100,12 @@ const rules = reactive({
     ],
     account: [
         { required: true, message: '请输入账号', trigger: 'blur' },
-        { min: 3, message: '账号长度至少为3位', trigger: 'blur' }
+        { min: 3, max: 30, message: '账号长度至少为3位', trigger: 'blur' },
+        {
+            // pattern: /^[a-zA-Z0-9_-]{3,30}$/,
+            // message: '账号只能包含大小写字母、数字、下划线和连接符',
+            // trigger: 'blur'
+        }
     ],
     password: [
         { required: true, message: '请输入密码', trigger: 'blur' },

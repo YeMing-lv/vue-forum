@@ -41,7 +41,7 @@ onMounted(async () => {
     // 获取指定种类草稿箱
     userStore.fetchDraft(prop.editorType);
 
-    console.log(localStorage.getItem("token"));
+    // console.log(localStorage.getItem("token"));
 });
 
 // 退出页面 确认是否保存草稿
@@ -293,7 +293,7 @@ function extractPart(originalUrl) {
     <div class="writting">
         <div class="container editor">
             <el-menu :default-active="activeIndex" class="editor-menu" mode="horizontal" @select="handleSelect">
-                <el-menu-item index="1">{{ prop.editorType === 'quesion' ? "编写话题" : "编写回答" }}</el-menu-item>
+                <el-menu-item index="1">{{ prop.editorType === 'question' ? "编写话题" : "编写回答" }}</el-menu-item>
                 <el-menu-item index="2">草稿箱</el-menu-item>
             </el-menu>
             <div v-if="activeIndex === '1'" style="border: 1px solid #ccc;margin-top: 10px;">
@@ -306,9 +306,7 @@ function extractPart(originalUrl) {
                     @onChange="handleChange" @onDestroyed="handleDestroyed" @onFocus="handleFocus" @onBlur="handleBlur"
                     @customAlert="customAlert" @customPaste="customPaste" />
             </div>
-            <div class="draft" v-if="activeIndex === '2'">
-                <Draft @editDraft="handleEditDraft" :draft-type="prop.editorType" />
-            </div>
+            
             <el-dialog v-model="saveDialogActive" title="有新的输入内容未保存" destroy-on-close>
                 <span>是否要先保存草稿？</span>
                 <template #footer>
@@ -325,6 +323,7 @@ function extractPart(originalUrl) {
                 <el-button type="primary" @click="publish()">发表回答</el-button>
             </div>
         </div>
+        <Draft v-if="activeIndex === '2'" @editDraft="handleEditDraft" :draft-type="prop.editorType" />
         <div class="footer" v-if="activeIndex === '1' && prop.editorType === 'question'">
             <div class="container footer-container">
                 <el-button @click="saveWrite()">保存草稿</el-button>
@@ -336,10 +335,15 @@ function extractPart(originalUrl) {
 
 <style scoped>
 .writting {
-    min-height: 100vh;
-    /* 确保容器高度至少占满视口 */
     overflow: visible;
     /* 防止溢出限制定位 */
+}
+
+.editor {
+    /* display: inline-flex; */
+    /* flex-direction: column;
+    justify-content: center; */
+
 }
 
 .editor-menu {

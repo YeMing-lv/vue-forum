@@ -1,40 +1,19 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import QueList from '../../components/List/QueList.vue';
 import ArtList from '../../components/List/ArtList.vue';
-import { useNavStore } from '../../store/navPinia';
-import { useQueStore } from '../../store/quePinia';
-import { useArtStore } from '../../store/artPinia';
 
-const navStore = useNavStore();
-const queStore = useQueStore();
-const artStore = useArtStore();
+const route = useRoute();
+const router = useRouter();
 
-const searchKeyword = computed(() => navStore.searchKeyword);
-const questionList = computed(() => queStore.questionList);
-const articleList = computed(() => artStore.articleList);
+const searchKeyword = route.query.keyword;
 
 const activeMenuIndex = ref('2');
 
-const hasSearch = ref(false);
-
-onMounted(() => {
-    if (questionList.value != null) {
-        hasSearch.value = true;
-    }
-})
-
-onUnmounted(() => {
-    navStore.searchKeyword = null;
-})
-
 // 导航栏 选择
 const handleSelect = async (key, keyPath) => {
-    if (key == 3 && searchKeyword.value != null) { // 搜索 文章列表
-        await artStore.fetchSearchArticleList(searchKeyword.value);
-        activeMenuIndex.value = key;
-    }
     activeMenuIndex.value = key;
 }
 </script>
@@ -43,7 +22,7 @@ const handleSelect = async (key, keyPath) => {
     <div class="search">
         <el-backtop :right="100" :bottom="100" />
         <div class="header">
-            <Header headerNav="0" />
+            <Header headerNav="0" :history="searchKeyword" />
         </div>
         <el-menu :default-active="activeMenuIndex" class="content-menu" mode="horizontal" @select="handleSelect">
             <el-menu-item index="1" disabled>综合</el-menu-item>
@@ -53,8 +32,9 @@ const handleSelect = async (key, keyPath) => {
         </el-menu>
         <div class="container content">
             <div class="search-list">
-                <QueList v-if="questionList != null && activeMenuIndex === '2'" :question-list="questionList" />
-                <ArtList v-if="articleList != null && activeMenuIndex === '3'" :article-list="articleList" />
+                <QueList v-if="activeMenuIndex === '2'"
+                    type="search" keyword="{{ searchKeyword }}" />
+                <ArtList v-if="activeMenuIndex === '3'" type="search" :keyword="searchKeyword" />
             </div>
             <div class="aside">
                 其它

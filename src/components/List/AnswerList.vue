@@ -1,68 +1,94 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { CaretTop } from '@element-plus/icons-vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { formatUTCtoLocal } from '../../utils/timeUtils.js';
 import { useAnsStore } from '../../store/ansPinia.js';
-import { useUserStore } from '../../store/userPinia.js';
+
+import { throttle } from '../../utils/throttle';
+
+import FollowButton from '../Button/FollowButton.vue';
+import LikeButton from '../Button/LikeButton.vue';
 
 const ansStore = useAnsStore();
-const userStore = useUserStore();
 
-const answerList = computed(() => ansStore.answerList);
-const answerIsAgree = computed(() => ansStore.answerIsAgree);
+const props = defineProps(['parentId', 'type']);
+const answerList = computed(() => ansStore.answerList); // 回答列表
+const total = computed(() => ansStore.page.total);
 
-// 要显示的 部分answerList 的索引
-const displayIndex = ref();
-
+const ifLoading = ref(false);
 const ifShowMore = ref(false);
 
-onMounted(() => {
-    // console.log(answerList.value);
+onMounted(async () => {
+    ifLoading.value = true; // 显示加载动画
+    ansStore.init();
 
-    // 初始显示的回答数
-    if (answerList.value.length <= 2) {
-        displayIndex.value = answerList.value.length;
-    } else {
-        displayIndex.value = 2;
-        ifShowMore.value = true;
-    }
+    // 获取列表
+    await ansStore.fetchAnswerList(props.type, props.parentId).then(() => {
+        ifLoading.value = false; // 隐藏加载动画
+    });
+
+    console.log(answerList.value);
+
+    handleIfShowMore();
+    // console.log(ifShowMore.value);
+
+    // 页面下滑事件监听
+    window.addEventListener('scroll', throttledScrollHandler);
+
 });
 
-// 关注按钮的处理  ？？？？？？做个模块？？？？？？
-// 判断当前关注关系是 未关注 还是 已关注
-const ifFollower = (id) => userStore.ifAttention(id);
-// 更改关注关系
-const changeFollower = async (attType, id) => {
-    const ifF = ifFollower(id);
-    if (ifF == true) {
-        await userStore.deleteAttention(attType, id);
-    } else if (ifF == false) {
-        await userStore.insertAttention(attType, id);
-    }
-}
+onUnmounted(() => {
+    // 数据初始化
+    ansStore.init();
+    // 销毁监听器
+    window.removeEventListener('scroll', throttledScrollHandler);
+})
 
-// ？？？？？？做个模块？？？？？？？
-// 赞同点击事件
-const agree = async (ansId) => {
-    if (answerIsAgree.value.includes(ansId)) { // 已经点赞过了
-        await ansStore.updateAnswerLikeNum('down', ansId);
-        ansStore.deleteAgreedAnswer(ansId);
-    } else { // 还没点赞过
-        await ansStore.updateAnswerLikeNum('up', ansId);
-        ansStore.addAgreedAnswer(ansId);
-    }
-}
+// 滚动 显示更多的话题
+const handleScrollShowMore = async () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const clientHeight = document.documentElement.clientHeight;
+    const scrollHeight = document.documentElement.scrollHeight;
 
-// 显示更多的回答
-const addMoreAnswer = () => {
-    if (displayIndex.value === answerList.value.length-1) { // 剩余 1 个回答
-        displayIndex.value = displayIndex.value + 1;
-        ifShowMore.value = false;
-    } else if (displayIndex.value === answerList.value.length-2) { // 剩余 2 个回答
-        displayIndex.value = displayIndex.value + 2;
-        ifShowMore.value = false;
-    } else { // 剩余回答数大于 2
-        displayIndex.value = displayIndex.value + 2;
+    // console.log(scrollTop + clientHeight)
+    // console.log(scrollHeight)
+
+    ifLoading.value = true; // 显示加载动画
+    // 当滚动到底部时触发
+    // ??? 不灵敏 ???
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+        if (ifShowMore.value) {
+
+            // console.log("showMore")
+            // 获取 新分页
+            // 1.更新页面参数
+            if (ansStore.page.currentPage === 1) { // 第一次分页后从 第3页开始
+                ansStore.page.currentPage = 3;
+            } else {
+                ansStore.page.currentPage++; // 增加页码
+            }
+            if (ansStore.page.pageSize !== 3) { // 尺寸改为3
+                ansStore.page.pageSize = 3;
+            }
+            // 2.调用新分页函数
+            await ansStore.fetchAnswerList(props.type, props.parentId);
+
+            handleIfShowMore();
+        }
+    }
+    ifLoading.value = false; // 隐藏加载动画
+}
+const throttledScrollHandler = throttle(handleScrollShowMore, 1000);
+
+// 是否还有列表数据要显示
+function handleIfShowMore() {
+    // console.log(questionList.value);
+    // console.log(queStore.page.total);
+    if (answerList.value != null) {
+        if (answerList.value.length < ansStore.page.total) {
+            ifShowMore.value = true;
+        } else {
+            ifShowMore.value = false;
+        }
     }
 }
 
@@ -70,34 +96,21 @@ const addMoreAnswer = () => {
 
 <template>
     <div class="answer">
-        <div class="ans-number">全部{{ answerList.length }}个回答</div>
+        <div class="ans-number">全部{{ total }}个回答</div>
         <hr style="width: 98%;margin: 0 auto;">
-        <div class="ans-container" v-for="ans in answerList.slice(0, displayIndex)">
+        <div class="ans-container" v-for="ans in answerList">
             <div class="ans-author">
-                <img class="ans-head" :src="ans.user.userHead" alt="ansAuthorHead">
-                <div class="ans-name">{{ ans.user.userName }}</div>
-                <el-button :type="ifFollower(ans.user.userId) ? 'info' : ''"
-                    @click="changeFollower('user', ans.user.userId)" style="float: right;">
-                    {{ ifFollower(ans.user.userId) ? "已关注" : "+关注" }}
-                </el-button>
+                <img class="ans-head" :src="ans.userHead" alt="ansAuthorHead">
+                <div class="ans-name">{{ ans.userName }}</div>
+                <FollowButton :followedId="ans.userId" type="user" parentType="answer" />
             </div>
-            <span class="ans-content" v-html="ans.answer.ansContent"></span>
-            <div class="ans-time">编辑于：{{ formatUTCtoLocal(ans.answer.ansTime) }}</div>
-            <el-button type="primary" plain @click="agree(ans.answer.ansId)">
-                <el-icon style="margin-right: 5px;">
-                    <CaretTop />
-                </el-icon>
-                赞同{{ ans.answer.ansLikeNum }}
-            </el-button>
+            <span class="ans-content" v-html="ans.ansContent"></span>
+            <div class="ans-time">编辑于：{{ formatUTCtoLocal(ans.ansTime) }}</div>
+            <LikeButton :likeNum="ans.ansLikeNum" :likeId="ans.ansId" type="answer" />
             <br>
         </div>
         <el-divider></el-divider>
-        <div v-if="ifShowMore === true" class="ans-more" @click="addMoreAnswer">
-            查看更多回答
-        </div>
-        <div v-if="ifShowMore === false" class="ans-end">
-            已经到底了
-        </div>
+        <el-main v-loading="ifLoading"></el-main>
     </div>
 </template>
 
@@ -137,6 +150,7 @@ const addMoreAnswer = () => {
 }
 
 .ans-time {
+    margin-bottom: 10px;
     font-size: small;
     font-weight: 200;
 }

@@ -15,7 +15,7 @@ apiClient.interceptors.request.use(
         //注意使用token的时候需要引入cookie方法或者用本地localStorage等方法，推荐js-cookie
         const token = localStorage.getItem("token"); // 取token
         if (token) {
-            config.headers.token = token; // 后端要求把 token 放到 header 请求头中
+            config.headers.Authorization = token; // 后端要求把 token 放到 header 请求头中
         }
 
         return config;
@@ -130,20 +130,20 @@ export default {
      */
     async userRegister(name, account, password) {
         const response = await apiClient.post('/user/register', {
-            name,
-            account,
-            password
+            userName: name,
+            userAccount: account,
+            userPassword: password
         });
         return response.data;
     },
 
     /**
      * 检查Token
-     * @param {*} token 
      * @returns 
      */
-    async checkToken(token) {
-        const response = await apiClient.get(`/checktoken`);
+    async checkToken() {
+        const response = await apiClient.post(`/checkToken`);
+        console.log(response);
         return response.data;
     },
 
@@ -161,10 +161,11 @@ export default {
      * @returns 
      */
     async insertAttention(attFollower, attType, attFollowed) {
+        // console.log(attFollowed, attFollower, attType)
         const response = await apiClient.post(`/attention`, {
-            attFollower,
-            attType,
-            attFollowed
+            attFollower: attFollower,
+            attType: attType,
+            attFollowed: attFollowed
         });
         return response.data;
     },
@@ -178,18 +179,15 @@ export default {
         return response.data;
     },
 
-    // ==============question话题接口==================
+    // ============================question话题接口==================
     /**
      * 获取指定种类 话题列表
      * @param {*} listType 
      * @returns 
      */
-    async fetchQuestionList(listType) {
-        let response = null;
-        if (listType === "recommend") { // 获取推荐话题列表
-            response = await apiClient.get(`/question/recommend`);
-            return response.data;
-        }
+    async fetchRecommendQuestionList(page) {
+        const response = await apiClient.get(`/question/recommend?currentPage=${page.currentPage}&pageSize=${page.pageSize}`);
+        return response.data;
     },
 
     /**
@@ -197,8 +195,8 @@ export default {
      * @param {*} keyword 
      * @returns 
      */
-    async fetchSearchQuestionList(keyword) {
-        const response = await apiClient.get(`/question/search/${keyword}`);
+    async fetchSearchQuestionList(page, keyword) {
+        const response = await apiClient.get(`/question/search/${keyword}?currentPage=${page.currentPage}&pageSize=${page.pageSize}`);
         return response.data;
     },
 
@@ -242,12 +240,6 @@ export default {
         return response.data;
     },
 
-    // question的answer回答接口
-    async fetchQueAnswerList(id) {
-        const response = await apiClient.get(`/answer/question/${id}`);
-        return response.data;
-    },
-
     /**
      * 更新指定对象 点赞数
      */
@@ -262,7 +254,26 @@ export default {
         return 'failed updateLikeNum';
     },
 
-    // answer 回答接口
+    // ========================answer 回答接口==========================
+
+    /**
+     * 获取指定种类、ID answer回答列表
+     * @param {*} type 
+     * @param {*} page 
+     * @param {*} id 
+     * @returns 
+     */
+    async fetchAnswerList(type, page, id) {
+        if (type === 'question') {
+            const response = await apiClient.get(`/answer/question/${id}?currentPage=${page.currentPage}&pageSize=${page.pageSize}`);
+            return response.data;
+        } else if (type === 'article') {
+            const response = await apiClient.get(`/answer/article/${id}?currentPage=${page.currentPage}&pageSize=${page.pageSize}`);
+            return response.data;
+        }
+        console.log(response.data);
+    },
+
     /**
      * 插入新回答
      * @param {*} ansAuthorId 
@@ -279,7 +290,7 @@ export default {
         return response.data;
     },
 
-    // draft 草稿接口
+    // ====================draft 草稿接口============================
     async insertDraft(draAuthorId, draType, draTitle, draContent) {
         await apiClient.post(`/draft`, {
             draAuthorId,
@@ -311,11 +322,33 @@ export default {
 
     // ===========================article 文章接口==========================
     /**
+     * 获取指定ID 文章和作者
+     * @param {*} id 
+     */
+    async fetchCurrentArticle(id) {
+        const article = await apiClient.get(`/article/${id}`);
+        // console.log(article.data);
+        if (article.data.code != 200) return;
+
+        const authorId = article.data.data.artAuthorId;
+        const author = await apiClient.get(`/user/${authorId}`);
+        // console.log(author.data);
+        if (author.data.code != 200) return;
+
+        const result = {
+            article: article.data.data,
+            author: author.data.data
+        };
+        console.log(result);
+        return result;
+    },
+
+    /**
      * 获取推荐 文章列表
      * @returns 
      */
-    async fetchRecommendArticle() {
-        const response = await apiClient.get(`/article/recommend`);
+    async fetchRecommendArticle(page) {
+        const response = await apiClient.get(`/article/recommend?currentPage=${page.currentPage}&pageSize=${page.pageSize}`);
         return response.data;
     },
 
@@ -324,8 +357,8 @@ export default {
      * @param {*} keyword 
      * @returns 
      */
-    async fetchSearchArticleList(keyword) {
-        const response = await apiClient.get(`/article/search/${keyword}`);
+    async fetchSearchArticleList(page, keyword) {
+        const response = await apiClient.get(`/article/search/${keyword}?currentPage=${page.currentPage}&pageSize=${page.pageSize}`);
         return response.data;
     },
 
@@ -344,7 +377,7 @@ export default {
         });
         return response.data;
     },
-    
+
     /**
      * 更新文章点赞
      * @param {*} artId 

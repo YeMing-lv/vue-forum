@@ -1,55 +1,110 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useArtStore } from '../../store/artPinia';
-import { useAnsStore } from '../../store/ansPinia';
 
-const route = useRoute();
+import { throttle } from '../../utils/throttle';
+
 const router = useRouter();
 const artStore = useArtStore();
-const ansStore = useAnsStore();
 
-const props = defineProps(['articleList']); // 接收文章列表数据
+const props = defineProps(['type', 'keyword']); // 类别 和 关键词（用于调用分页查询）
 
-const displayArtList = ref(5); // 显示部分列表的索引
+const articleList = computed(() => artStore.articleList);
 
+const ifLoading = ref(false); // 加载状态
 const ifShowMore = ref(false); // 是否有更多文章可以显示
 
-onMounted(() => {
-    // 是否还有列表数据要显示
-    if (props.articleList.length > displayArtList.value) {
-        ifShowMore.value = true;
-    } else {
-        ifShowMore.value = false;
+// 获取文章列表数据
+onMounted(async () => {
+    ifLoading.value = true; // 显示加载动画
+    artStore.init();
+
+    // 获取列表
+    if (props.type === 'recommend') {
+        await artStore.fetchArticleList("recommend").then(() => {
+            ifLoading.value = false; // 隐藏加载动画
+        });
+    } else if (props.type === 'search') {
+        await artStore.fetchSearchArticleList(props.keyword).then(() => {
+            ifLoading.value = false;
+        });
     }
+
+    handleIfShowMore();
+    // console.log(ifShowMore.value);
+
+    // 页面下滑事件监听
+    window.addEventListener('scroll', throttledScrollHandler);
+})
+
+onUnmounted(() => {
+    // 数据初始化
+    artStore.init();
+    // 销毁监听器
+    window.removeEventListener('scroll', throttledScrollHandler);
 })
 
 // 跳转到文章页面
-const toArticle = async (article) => {
-    artStore.currentArticle = article;
-    await artStore.fetchArticleAuthor(article.artAuthorId).then(
-        ansStore.fetchQueAnswerList(article.artId) // 获取文章的评论
-    )
-    router.push('/articleDetail');
+const toArticle = (id) => {
+    router.push({
+        path: '/articleDetail',
+        query: { id: id}
+    });
 }
 
-// 显示更多的话题
-const showMoreArtList = () => {
-    const listLength = props.articleList.length;
+// 滚动 显示更多的话题
+const handleScrollShowMore = () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const clientHeight = document.documentElement.clientHeight;
+    const scrollHeight = document.documentElement.scrollHeight;
 
-    if (listLength <= displayArtList.value) return; // 没有更多列表数据了
+    // console.log(scrollTop + clientHeight)
+    // console.log(scrollHeight)
 
-    displayArtList.value = displayArtList.value + 4;
-}
+    ifLoading.value = true; // 显示加载动画
+    // 当滚动到底部时触发
+    // ??? 不灵敏 ???
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+        if (ifShowMore.value) {
 
-// 监听 是否还有显示数据
-watch(displayArtList, (newV, oldV) => {
-    if (props.articleList.length > newV) {
-        ifShowMore.value = true;
-    } else {
-        ifShowMore.value = false;
+            // console.log("showMore")
+            // 获取 新分页
+            // 1.更新页面参数
+            if (artStore.page.currentPage === 1) { // 第一次分页后从 第3页开始
+                artStore.page.currentPage = 3;
+            } else {
+                artStore.page.currentPage++; // 增加页码
+            }
+            if (artStore.page.pageSize !== 3) { // 尺寸改为3
+                artStore.page.pageSize = 3;
+            }
+            // 2.调用新分页函数
+            if (props.type === 'recommend') {
+                artStore.fetchArticleList(props.type);
+            } else if (props.type === 'search') {
+                artStore.fetchSearchArticleList(props.keyword);
+            }
+
+            handleIfShowMore();
+        }
     }
-})
+    ifLoading.value = false; // 隐藏加载动画
+}
+const throttledScrollHandler = throttle(handleScrollShowMore, 1000);
+
+// 是否还有列表数据要显示
+function handleIfShowMore() {
+    // console.log(articleList.value);
+    // console.log(artStore.page.total);
+    if (articleList.value != null) {
+        if (articleList.value.length < artStore.page.total) {
+            ifShowMore.value = true;
+        } else {
+            ifShowMore.value = false;
+        }
+    }
+}
 
 // 处理HTML数据
 const processedHTML = (htmlInput) => {
@@ -61,20 +116,15 @@ const processedHTML = (htmlInput) => {
 </script>
 
 <template>
-    <div class="content-list" v-for="art in props.articleList.slice(0, displayArtList)">
-        <div class="content-title" @click="toArticle(art)">{{ art.artTitle }}</div>
-        <div class="content-main" @click="toArticle(art)">
+    <div class="content-list" v-for="art in articleList">
+        <div class="content-title" @click="toArticle(art.artId)">{{ art.artTitle }}</div>
+        <div class="content-main" @click="toArticle(art.artId)">
             <img v-if="art.artCover != null" class="art-cover" :src="art.artCover" alt="文章封面">
             <span v-if="art.artContent != null" class="art-content"> {{ processedHTML(art.artContent) }}</span>
         </div>
         <el-divider></el-divider>
     </div>
-    <div v-if="ifShowMore === true" class="list-more" @click="showMoreArtList">
-        查看更多文章
-    </div>
-    <div v-if="ifShowMore === false" class="list-end">
-        已经到底了
-    </div>
+    <el-main v-loading="ifLoading"></el-main>
 </template>
 
 <style scoped>

@@ -1,95 +1,139 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
-import { CaretTop } from '@element-plus/icons-vue';
 import { useQueStore } from '../../store/quePinia';
 import { useAnsStore } from '../../store/ansPinia';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+
+import { throttle } from '../../utils/throttle';
+
+import LikeButton from '../Button/LikeButton.vue';
 
 const route = useRoute();
 const router = useRouter();
 const queStore = useQueStore();
-const ansStore = useAnsStore();
 
-const props = defineProps(['questionList']); // 接收话题列表数据
+const props = defineProps(['type', 'keyword']); // 类别 和 关键词（用于调用分页查询）
 
-const answerIsAgree = computed(() => ansStore.answerIsAgree);// 已点赞的 回答
+const questionList = computed(() => queStore.questionList); // 话题列表
 
-const displayQueList = ref(7); // 初始渲染的话题数
+const ifLoading = ref(false); // 加载状态
+const ifShowMore = ref(false); // 是否还有数据可以显示
 
-const ifShowMore = ref(false); // 是否已显示完列表 或 是否还有数据可以显示
+// 获取话题列表数据
+onMounted(async () => {
+    ifLoading.value = true; // 显示加载动画
+    queStore.initList();
 
-onMounted(() => {
-    // 是否还有列表数据要显示
-    if (props.questionList.length > displayQueList.value) {
-        ifShowMore.value = true;
-    } else {
-        ifShowMore.value = false;
+    // 获取列表
+    if (props.type === 'recommend') {
+        await queStore.fetchQuestionList("recommend").then(() => {
+            ifLoading.value = false; // 隐藏加载动画
+
+        });
+    } else if (props.type === 'search') {
+        await queStore.fetchSearchQuestionList(props.keyword).then(() => {
+            ifLoading.value = false;
+        })
     }
+
+    handleIfShowMore();
+    // console.log(ifShowMore.value);
+
+    // 页面下滑事件监听
+    window.addEventListener('scroll', throttledScrollHandler);
+})
+
+onUnmounted(() => {
+    // 数据初始化
+    queStore.initList();
+    // 销毁监听器
+    window.removeEventListener('scroll', throttledScrollHandler);
 })
 
 // 跳转到话题页面，要先获取que话题和对应ans回答数据
-const toQuestion = async (id) => {
-    await queStore.fetchCurrentQuestion(id).then(
-        ansStore.fetchQueAnswerList(id)
-    )
-    router.push('/question');
+const toQuestion = (id) => {
+    router.push({
+        path: '/question',
+        query: { id: id }
+    });
 }
 
-// 赞同点击事件
-const agree = async (ansId) => {
-    if (answerIsAgree.value.includes(ansId)) { // 已经点赞过了
-        await queStore.updateAnswerLikeNum('down', ansId);
-        ansStore.deleteAgreedAnswer(ansId);
-    } else { // 还没点赞过
-        await queStore.updateAnswerLikeNum('up', ansId);
-        ansStore.addAgreedAnswer(ansId);
+// 滚动 显示更多的话题
+const handleScrollShowMore = async () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const clientHeight = document.documentElement.clientHeight;
+    const scrollHeight = document.documentElement.scrollHeight;
+
+    // console.log(scrollTop + clientHeight)
+    // console.log(scrollHeight)
+
+    ifLoading.value = true; // 显示加载动画
+    // 当滚动到底部时触发
+    // ??? 不灵敏 ???
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+        if (ifShowMore.value) {
+
+            // console.log("showMore")
+            // 获取 新分页
+            // 1.更新页面参数
+            if (queStore.page.currentPage === 1) { // 第一次分页后从 第3页开始
+                queStore.page.currentPage = 3;
+            } else {
+                queStore.page.currentPage++; // 增加页码
+            }
+            if (queStore.page.pageSize !== 3) { // 尺寸改为3
+                queStore.page.pageSize = 3;
+            }
+            // 2.调用新分页函数
+            if (props.type === 'recommend') {
+                await queStore.fetchQuestionList(props.type);
+            } else if (props.type === 'search') {
+                await queStore.fetchSearchQuestionList(props.keyword);
+            }
+
+            handleIfShowMore();
+
+
+        }
+    }
+    ifLoading.value = false; // 隐藏加载动画
+}
+const throttledScrollHandler = throttle(handleScrollShowMore, 1000);
+
+// 是否还有列表数据要显示
+function handleIfShowMore() {
+    // console.log(questionList.value);
+    // console.log(queStore.page.total);
+    if (questionList.value != null) {
+        if (questionList.value.length < queStore.page.total) {
+            ifShowMore.value = true;
+        } else {
+            ifShowMore.value = false;
+        }
     }
 }
 
-// 显示更多的话题
-const showMoreQueList = () => {
-    const listLength = props.questionList.length;
-    
-    if (listLength <= displayQueList.value) return; // 没有更多列表数据了
-
-    displayQueList.value = displayQueList.value + 4;
+// HTML改为纯文字
+const changeHTMLToText = (html) => {
+    return html.replace(/<[^>]+>/g, '');
 }
-
-// 监听 是否还有显示数据
-watch(displayQueList, (newV, oldV) => {
-    if (props.questionList.length > newV) {
-        ifShowMore.value = true;
-    } else {
-        ifShowMore.value = false;
-    }
-})
 
 </script>
 
 <template>
-    <div class="content-list" v-for="que in props.questionList.slice(0, displayQueList)">
-        <div class="content-title" @click="toQuestion(que.question.queId)">{{ que.question.queTitle }}</div>
-        <div class="content-answer" @click="toQuestion(que.question.queId)">
-            <div v-if="que.user != null" class="content-answer-user">
-                <img :src="que.user.userHead" style="width: 40px;margin-right: 10px;" alt="userHead">
-                {{ que.user.userName }}:
+    <div class="content-list" v-for="que in questionList" :key="que.queId">
+        <div class="content-title" @click="toQuestion(que.queId)">{{ que.queTitle }}</div>
+        <div v-if="que.answerWithUser.ansId != null" class="content-answer" @click="toQuestion(que.queId)">
+            <div class="ans-head">
+                <img :src="que.answerWithUser.userHead" style="width: 40px;border-radius: 10%;" alt="userHead">
             </div>
-            <span v-if="que.answer != null" class="ans-content" v-html="que.answer.ansContent"></span>
+            <span class="ans-content">{{ que.answerWithUser.userName }}：{{
+                changeHTMLToText(que.answerWithUser.ansContent) }}</span>
         </div>
-        <el-button v-if="que.answer != null" type="primary" plain @click="agree(que.answer.ansId)">
-            <el-icon style="margin-right: 5px;">
-                <CaretTop />
-            </el-icon>
-            赞同{{ que.answer.ansLikeNum }}
-        </el-button>
-        <el-divider></el-divider>
+        <LikeButton :likeNum="que.answerWithUser.ansLikeNum" :likeId="que.answerWithUser.ansId" type="queListAnswer"/>
+        <el-divider style="width: 97%;"></el-divider>
     </div>
-    <div v-if="ifShowMore === true" class="list-more" @click="showMoreQueList">
-        查看更多话题
-    </div>
-    <div v-if="ifShowMore === false" class="list-end">
-        已经到底了
-    </div>
+    <el-main v-loading="ifLoading"></el-main>
 </template>
 
 <style scoped>
@@ -110,6 +154,7 @@ watch(displayQueList, (newV, oldV) => {
 }
 
 .content-answer {
+    display: flex;
     margin-bottom: 5px;
     font-size: 14px;
     cursor: pointer;
@@ -119,9 +164,10 @@ watch(displayQueList, (newV, oldV) => {
     color: rgb(99, 99, 99);
 }
 
-.content-answer-user {
-    display: flex;
-    align-items: center;
+.content-answer .ans-head {
+    width: 60px;
+    height: auto;
+    margin-right: 10px;
 }
 
 .content-answer .ans-content {
@@ -130,30 +176,5 @@ watch(displayQueList, (newV, oldV) => {
     -webkit-line-clamp: 3;
     overflow: hidden;
     word-break: break-all;
-    /* 允许单词内断行（可选） */
-}
-
-.list-more {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-bottom: 20px;
-    font-size: 14px;
-    font-weight: 300;
-    background: #fff;
-    cursor: pointer;
-}
-
-.list-more:hover {
-    font-weight: 550;
-}
-
-.list-end {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-bottom: 20px;
-    font-size: 14px;
-    background: #fff;
 }
 </style>

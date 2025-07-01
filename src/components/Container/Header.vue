@@ -12,13 +12,13 @@ const userStore = useUserStore();
 const queStore = useQueStore();
 const ansStore = useAnsStore();
 
-const props = defineProps(['headerNav']);
-const headerNavActive = computed(() => props.headerNav);
+//                          导航栏索引   搜索框历史输入
+const props = defineProps(['headerNav', 'history']);
 const userHeadImage = computed(() => userStore.user.userHead);
 const autoComQuestionList = computed(() => queStore.searchAutoCompleteQuestionList);
 
 // 输入框输入
-const searchInput = ref('');
+const searchInput = ref(props.history); // 显示上一次的 历史搜索
 
 onMounted(() => {
     // console.log(headerNavActive.value)
@@ -26,10 +26,8 @@ onMounted(() => {
 
 // 退出登录
 const outLogin = () => {
-    localStorage.setItem('isLoggedIn', false);
-    userStore.cleanUser();
-    const redirectPath = route.query.redirect || '/login';
-    router.push(redirectPath);
+    userStore.initUser(); // 清除 UserStore
+    router.push('/login'); // 跳到登录页面时 会自动清除token的
 }
 
 // 获取补全输入数据列表
@@ -44,15 +42,19 @@ const handleQuestionSearch = (queryString, cb) => {
 }
 
 // 选择补全列表的话题 跳转话题页面
-const handleSearchSelect = async (item) => {
-    if (typeof item.value === "undefined") { // 过滤数据类型
-        await queStore.fetchCurrentQuestion(item.queId).then(
+const handleSearchSelect = (item) => {
+    // 过滤数据类型
+    if (typeof item.value === "undefined") { // 点击补全输入框里的话题
+        queStore.fetchCurrentQuestion(item.queId).then(
             ansStore.fetchQueAnswerList(item.queId)
         )
         router.push('/question');
-    } else if (item.value !== '') {
-        await queStore.fetchSearchQuestionList(item.value);
-        router.push('/search'); // ?????????设置带参数keyword
+    } else if (item.value !== '') { // 输入关键词搜索
+        // queStore.fetchSearchQuestionList(item.value);
+        router.push({
+            name: 'Search',
+            query: { keyword: item.value } // 路由传参数keyword
+        }); 
     }
 }
 
@@ -66,11 +68,11 @@ const handleSearchSelect = async (item) => {
             </div>
             <div class="header-nav">
                 <ul>
-                    <li :class="{ active: headerNavActive === '1' }"><router-link to="/main"
+                    <li :class="{ active: props.headerNav === '1' }"><router-link to="/main"
                             style="color: inherit;">首页</router-link></li>
-                    <li :class="{ active: headerNavActive === '2' }"><router-link to="/article"
+                    <li :class="{ active: props.headerNav  === '2' }"><router-link to="/article"
                             style="color: inherit;">文章</router-link></li>
-                    <li :class="{ active: headerNavActive === '3' }"><router-link to="/writting"
+                    <li :class="{ active: props.headerNav  === '3' }"><router-link to="/writting"
                             style="color: inherit;">创作</router-link></li>
                 </ul>
             </div>
@@ -84,9 +86,6 @@ const handleSearchSelect = async (item) => {
                     <li><el-icon>
                             <BellFilled />
                         </el-icon>消息</li>
-                    <li><el-icon>
-                            <Comment />
-                        </el-icon>私信</li>
                     <li>
                         <el-popover placement="bottom" trigger="click">
                             <div class="header-user-head"><el-icon>

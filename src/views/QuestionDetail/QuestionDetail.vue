@@ -1,62 +1,48 @@
 <script setup>
+import { useRoute } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import AnswerList from '../../components/List/AnswerList.vue';
 import Editor from '../../components/Editor/Editor.vue';
+import FollowButton from '../../components/Button/FollowButton.vue';
+import LikeButton from '../../components/Button/LikeButton.vue';
 
 import { useQueStore } from '../../store/quePinia';
-import { useUserStore } from '../../store/userPinia';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
 
+const route = useRoute();
 const queStore = useQueStore();
-const userStore = useUserStore();
+
+const queId = route.query.id;
 
 // 当前话题的数据
 const currentQuestion = computed(() => queStore.currentQuestion);
-const questionIsAgree = computed(() => queStore.questionIsAgree);
 const tagList = computed(() => {
-    if (currentQuestion.value.queTag != null) {
-        currentQuestion.value.queTag.split(',')
-    }
+    return currentQuestion.value?.queTag?.split(',') || []; // ????????
 });
 const author = computed(() => queStore.author);
 
-// 控制编辑器显示
-const ifEdit = ref(false);
+const ifLoading = ref(false);
+const ifEdit = ref(false); // 控制编辑器显示
 
-onMounted(() => {
-    // console.log(queStore.value)
+
+// 获取话题详情
+onMounted(async () => {
+
+    queStore.initDetail();
+    // 获取数据
+    await queStore.fetchCurrentQuestion(queId);
 
     // 进入详情页自动增加话题浏览数
     if (queStore.currentQuestion != null) {
-        queStore.increaseQueBrowseNum(queStore.currentQuestion.queId);
+        queStore.increaseQueBrowseNum(queId);
     }
 });
 
-// 关注按钮的处理
-// 判断当前关注关系是 未关注 还是 已关注
-const ifFollower = (id) => userStore.ifAttention(id);
-// 更改关注关系
-const changeFollower = async (attType, id) => {
-    const ifF = ifFollower(id);
-    if (ifF === true) {
-        await userStore.deleteAttention(attType, id);
-    } else if (ifF === false) {
-        await userStore.insertAttention(attType, id);
-    }
-}
-
-// ？？？？？？做个模块？？？？？？？
-// 赞同点击事件
-const agree = async (queId) => {
-    if (questionIsAgree.value.includes(queId)) {
-        await queStore.updateQuestionLikeNum('down', queId);
-        queStore.deleteAgreedQuestion(queId);
-    } else {
-        await queStore.updateQuestionLikeNum('up', queId);
-        queStore.addAgreedQuestion(queId);
-    }
-}
+onUnmounted(() => {
+    // 销毁数据
+    queStore.initDetail();
+})
 
 // 完成回答编辑 隐藏编辑器
 const handleEditor = (data) => {
@@ -67,9 +53,9 @@ const handleEditor = (data) => {
 
 <template>
     <div class="question">
-        <Header headerNav="0"/>
+        <Header headerNav="0" />
 
-        <div class="que-header">
+        <div v-if="currentQuestion" class="que-header">
             <div class="que-header-left">
                 <el-tag v-for="tag in tagList" :key="tag" style="margin: 0 10px 10px 0;">
                     {{ tag }}
@@ -77,18 +63,14 @@ const handleEditor = (data) => {
                 <div class="title">{{ currentQuestion.queTitle }}</div>
                 <div class="content" v-html="currentQuestion.queContent"></div>
                 <div class="other">
-                    <el-button :type="ifFollower(currentQuestion.queId) ? 'info' : 'primary'"
-                        @click="changeFollower('question', currentQuestion.queId)">
-                        {{ ifFollower(currentQuestion.queId) ? '已关注' : '关注问题' }}
-                    </el-button>
+                    <FollowButton :followedId="currentQuestion.queId" type="question"/>
+
                     <el-button @click="handleEditor"><el-icon>
                             <EditPen />
                         </el-icon>{{ ifEdit ? "编辑回答" : "写回答" }}</el-button>
+                        
                     <div class="like">
-                        <el-button text @click="agree(currentQuestion.queId)">
-                            <img src="/public/image/like.png" alt="like">
-                            点赞{{ currentQuestion.queLikeNum }}
-                        </el-button>
+                        <LikeButton :likeNum="currentQuestion.queLikeNum" :likeId="currentQuestion.queId" type="question" />
                     </div>
                 </div>
             </div>
@@ -99,16 +81,16 @@ const handleEditor = (data) => {
             </div>
         </div>
 
-        <div class="que-editor">
+        <div class="container">
             <Editor v-if="ifEdit" editor-type="answer" @if-complete-answer-edit="handleEditor" />
         </div>
 
         <div class="container que-content">
             <div class="que-answer">
-                <AnswerList />
+                <AnswerList :parentId="queId" type="question"/>
             </div>
             <div class="que-aside">
-                <div class="aside-author">
+                <div v-if="author" class="aside-author">
                     <div class="author-legend">关于作者</div>
                     <div class="author-top">
                         <img :src="author.userHead" alt="" style="width: 60px;border-radius: 10%;">
@@ -123,10 +105,7 @@ const handleEditor = (data) => {
                         <div class="author-followers">关注者<br>{{ author.userFollowersNum }}</div>
                     </div>
                     <div class="author-bottom">
-                        <el-button :type="ifFollower(author.userId) ? 'info' : 'primary'"
-                            @click="changeFollower('user', author.userId)">
-                            {{ ifFollower(author.userId) ? "已关注" : "+关注他" }}
-                        </el-button>
+                        <FollowButton :followedId="author.userId" type="user" parentType="question"/>
                     </div>
                 </div>
                 <div>
@@ -135,7 +114,6 @@ const handleEditor = (data) => {
             </div>
         </div>
         <el-backtop :right="100" :bottom="100" />
-        <!-- <el-footer style="border: 1px solid">Footer</el-footer> -->
     </div>
 </template>
 
@@ -175,16 +153,6 @@ const handleEditor = (data) => {
     margin: auto 10px;
     align-items: center;
     cursor: pointer;
-}
-
-.que-header-left .like img {
-    margin: auto 5px;
-    width: 20px;
-    height: 20px;
-}
-
-.que-header-left .like:hover>img {
-    color: black;
 }
 
 .que-header-right {

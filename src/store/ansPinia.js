@@ -4,12 +4,22 @@ import { ref } from "vue";
 
 export const useAnsStore = defineStore('ans', {
     state: () => ({
-        answerList: null,
+        answerList: [],
+        page: {
+            currentPage: 1,
+            pageSize: 6,
+            total: 0
+        },
         answerIsAgree: [0],
     }),
     actions: {
-        cleanAnswerList() {
-            this.answerList = null;
+        init() {
+            this.answerList = [];
+            this.page = {
+                currentPage: 1,
+                pageSize: 6,
+                total: 0
+            };
         },
         addAgreedAnswer(ansId) {
             this.answerIsAgree.push(ansId);
@@ -19,12 +29,29 @@ export const useAnsStore = defineStore('ans', {
         },
 
         /**
-         * 获取指定ID话题 的回答列表
+         * 获取指定种类、ID 的回答列表
          * @param {*} id 
          */
-        async fetchQueAnswerList(id) {
-            const result = await myrequest.fetchQueAnswerList(id);
-            this.answerList = result.data;
+        async fetchAnswerList(type, id) {
+            const result = await myrequest.fetchAnswerList(type, this.page, id);
+            
+            // console.log(result);
+            if (result.code === 200) {
+                // 1.存储数据总数
+                this.page.currentPage = result.data.current;
+                this.page.total = result.data.total;
+
+                // 2.判断 还有没有数据
+                if (this.answerList != []) {
+                    if (this.page.total > this.answerList.length) {
+                        this.answerList = [...this.answerList, ...result.data.records];
+                    }
+                } else {
+                    this.answerList = result.data.records;
+                }
+            }
+            // console.log(this.page);
+            // console.log(this.answerList);
         },
 
         /**
@@ -44,16 +71,15 @@ export const useAnsStore = defineStore('ans', {
          * @param {*} id 
          */
         async updateAnswerLikeNum(upOrDown, id) {
-            const updateAnswer = ref(this.answerList[this.answerList.findIndex(item => item.answer.ansId === id)].answer);
-            const likeNum = updateAnswer.value.ansLikeNum;
+            const updateAnswer = ref(this.answerList.find(item => item.ansId === id));
 
             if (upOrDown === "up") {
-                const result = await myrequest.updateLikeNum('answer', id, likeNum + 1);
+                const result = await myrequest.updateLikeNum('answer', id, updateAnswer.value.ansLikeNum + 1);
                 if (result.data === 1) {
                     updateAnswer.value.ansLikeNum++;
                 }
             } else if (upOrDown === "down") {
-                const result = await myrequest.updateLikeNum('answer', id, likeNum - 1);
+                const result = await myrequest.updateLikeNum('answer', id, updateAnswer.value.ansLikeNum - 1);
                 if (result.data === 1) {
                     updateAnswer.value.ansLikeNum--;
                 }

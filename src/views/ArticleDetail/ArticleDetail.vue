@@ -1,36 +1,36 @@
 <script setup>
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import Answer from '../../components/List/AnswerList.vue';
 import Editor from '../../components/Editor/Editor.vue';
-import { useUserStore } from '../../store/userPinia';
+import FollowButton from '../../components/Button/FollowButton.vue';
 import { useArtStore } from '../../store/artPinia';
 import { formatUTCtoLocal } from '../../utils/timeUtils';
 
-const userStore = useUserStore();
+const route = useRoute();
 const artStore = useArtStore();
 
+const artId = route.query.id;
 const currentArticle = computed(() => artStore.currentArticle);
 const author = computed(() => artStore.author);
 
+const ifLoading = ref(false);
 const ifEdit = ref(false); // 编辑器的显示
 
-onMounted(() => {
-    
+onMounted(async () => {
+    ifLoading.value = true;
+    artStore.init();
+
+    console.log(artId);
+    await artStore.fetchCurrentArticle(artId);
+
+    ifLoading.value = false;
 })
 
-// 关注按钮的处理
-// 判断当前关注关系是 未关注 还是 已关注
-const ifFollower = (id) => userStore.ifAttention(id);
-// 更改关注关系
-const changeFollower = async (attType, id) => {
-    const ifF = ifFollower(id);
-    if (ifF == true) {
-        await userStore.deleteAttention(attType, id);
-    } else if (ifF == false) {
-        await userStore.insertAttention(attType, id);
-    }
-}
+onUnmounted(() => {
+    artStore.init();
+})
 
 // 控制编辑器
 const handleEditor = () => {
@@ -38,7 +38,7 @@ const handleEditor = () => {
 }
 
 // 编辑完成
-const editComplete = (data) => {
+const editComplete = () => {
     ifEdit.value = false;
 }
 
@@ -48,25 +48,23 @@ const editComplete = (data) => {
     <div class="articleDetail">
         <Header headerNav="0" />
         <div class="container content">
-            <div class="main">
+            <div v-if="currentArticle != null" class="main">
                 <div class="main-title">{{ currentArticle.artTitle }}</div>
-                <div class="main-author">
-                    <span class="author-name">{{ author.userName }}{{ formatUTCtoLocal(currentArticle.artTime) }}</span>
-                </div>
+                <span class="main-author-name">{{ author.userName }}&nbsp;{{ formatUTCtoLocal(currentArticle.artTime) }}</span>
                 <span class="main-content" v-html="currentArticle.artContent"></span>
                 <el-divider></el-divider>
                 <div class="main-answer">
                     <el-button @click="handleEditor">{{ ifEdit ? "编写评论" : "写评论" }}</el-button>
                     <div v-if="ifEdit" class="editor">
-                        <Editor editor-type="answer" @ifCompleteAnswerEdit="editComplete"/>
+                        <Editor editor-type="answer" @ifCompleteAnswerEdit="editComplete" />
                     </div>
                     <div class="">
-                        <Answer />
+                        <Answer :parentId="currentArticle.artId" type="article" />
                     </div>
                 </div>
             </div>
             <div class="aside">
-                <div class="aside-author">
+                <div v-if="author != null" class="aside-author">
                     <div class="author-legend">关于作者</div>
                     <div class="author-top">
                         <img :src="author.userHead" alt="" style="width: 60px;border-radius: 10%;">
@@ -81,16 +79,11 @@ const editComplete = (data) => {
                         <div class="author-followers">关注者<br>{{ author.userFollowersNum }}</div>
                     </div>
                     <div class="author-bottom">
-                        <el-button :type="ifFollower(author.userId) ? 'info' : 'primary'"
-                            @click="changeFollower('user', author.userId)">
-                            {{ ifFollower(author.userId) ? "已关注" : "+关注他" }}
-                        </el-button>
+                        <FollowButton :followedId="author.userId" type="user" parentType="article" />
                     </div>
                 </div>
             </div>
         </div>
-
-        <el-footer style="border: 1px solid">Footer</el-footer>
         <el-backtop :right="100" :bottom="100" />
     </div>
 </template>
@@ -119,13 +112,10 @@ const editComplete = (data) => {
     text-align: center;
 }
 
-.main-author {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 0 0 0 ;
-    font-size: 14px;
-    font-weight: 300;
+.main-author-name {
+    margin: 0 auto;
+    font-size: small;
+    font-weight: 800;
 }
 
 .main-content {
@@ -138,12 +128,13 @@ const editComplete = (data) => {
     max-width: 100% !important;
     height: auto !important;
     object-fit: contain !important;
-    width: auto !important; /* 覆盖内联 width="1000px" */
+    width: auto !important;
+    /* 覆盖内联 width="1000px" */
 }
 
 .main-answer .editor {
     display: flex;
-    
+
     align-items: center;
 }
 
@@ -175,7 +166,7 @@ const editComplete = (data) => {
     margin-left: 10px;
 }
 
-.author-name {
+.author-top-right .author-name {
     font-size: large;
     font-weight: 800;
 }
