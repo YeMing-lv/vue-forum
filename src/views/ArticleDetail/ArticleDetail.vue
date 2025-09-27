@@ -18,12 +18,16 @@ const author = computed(() => artStore.author);
 const ifLoading = ref(false);
 const ifEdit = ref(false); // 编辑器的显示
 
+// 发送请求 获取指定文章数据
 onMounted(async () => {
+
     ifLoading.value = true;
     artStore.init();
 
-    console.log(artId);
+    // console.log(artId);
     await artStore.fetchCurrentArticle(artId);
+
+    document.title = currentArticle.value.artTitle;
 
     ifLoading.value = false;
 })

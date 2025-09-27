@@ -1,11 +1,8 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
 import { useQueStore } from '../../store/quePinia';
-import { useAnsStore } from '../../store/ansPinia';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-
 import { throttle } from '../../utils/throttle';
-
 import LikeButton from '../Button/LikeButton.vue';
 
 const route = useRoute();
@@ -72,19 +69,7 @@ const handleScrollShowMore = async () => {
     // ??? 不灵敏 ???
     if (scrollTop + clientHeight >= scrollHeight - 10) {
         if (ifShowMore.value) {
-
-            // console.log("showMore")
-            // 获取 新分页
-            // 1.更新页面参数
-            if (queStore.page.currentPage === 1) { // 第一次分页后从 第3页开始
-                queStore.page.currentPage = 3;
-            } else {
-                queStore.page.currentPage++; // 增加页码
-            }
-            if (queStore.page.pageSize !== 3) { // 尺寸改为3
-                queStore.page.pageSize = 3;
-            }
-            // 2.调用新分页函数
+            // 调用新分页函数
             if (props.type === 'recommend') {
                 await queStore.fetchQuestionList(props.type);
             } else if (props.type === 'search') {
@@ -130,10 +115,12 @@ const changeHTMLToText = (html) => {
             <span class="ans-content">{{ que.answerWithUser.userName }}：{{
                 changeHTMLToText(que.answerWithUser.ansContent) }}</span>
         </div>
-        <LikeButton :likeNum="que.answerWithUser.ansLikeNum" :likeId="que.answerWithUser.ansId" type="queListAnswer"/>
+        <LikeButton v-model="que.answerWithUser.ansLikeNum" :likeId="que.answerWithUser.ansId" type="answer" />
         <el-divider style="width: 97%;"></el-divider>
     </div>
-    <el-main v-loading="ifLoading"></el-main>
+    <el-main v-if="ifLoading">
+        <el-skeleton />
+    </el-main>
 </template>
 
 <style scoped>

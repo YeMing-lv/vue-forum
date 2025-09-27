@@ -1,13 +1,10 @@
 <script setup>
 import { useUserStore } from '../../store/userPinia';
-import { useQueStore } from '../../store/quePinia';
-import { useArtStore } from '../../store/artPinia';
+import { deleteUserActions, insertOrUpdateUserActions } from '../../api/UserActions/UserActionsApi';
 import { ElMessage } from 'element-plus';
 
 const userStore = useUserStore();
-const queStore = useQueStore();
-const artStore = useArtStore(); // ???
-
+const userId = userStore.user.userId;
 const props = defineProps(['followedId', 'type', 'parentType']);
 
 // 判断当前关注关系是 未关注 还是 已关注
@@ -21,16 +18,22 @@ const changeFollower = async () => {
     const ifF = ifFollower(props.followedId);
 
     if (ifF == true) { // 已关注
-        await userStore.deleteAttention(props.type, props.followedId , props.parentType).then((result) => {
+        await userStore.deleteAttention(props.type, props.followedId, props.parentType).then((result) => {
             // console.log(result);
             if (!result) {
                 ElMessage.error("取消关注失败")
+            } else {
+                // 删除用户 关注动态
+                deleteUserActions(userId, 'follow', props.followedId, props.type);
             }
         });
     } else if (ifF == false) { // 未关注
         await userStore.insertAttention(props.type, props.followedId, props.parentType).then((result) => {
             if (!result) {
                 ElMessage.error("关注失败")
+            } else {
+                // 记录用户动态
+                insertOrUpdateUserActions(userId, 'follow', props.followedId, props.type);
             }
         });
     }

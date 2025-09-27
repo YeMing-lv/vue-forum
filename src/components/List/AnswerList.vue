@@ -2,9 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { formatUTCtoLocal } from '../../utils/timeUtils.js';
 import { useAnsStore } from '../../store/ansPinia.js';
-
 import { throttle } from '../../utils/throttle';
-
 import FollowButton from '../Button/FollowButton.vue';
 import LikeButton from '../Button/LikeButton.vue';
 
@@ -26,14 +24,11 @@ onMounted(async () => {
         ifLoading.value = false; // 隐藏加载动画
     });
 
-    console.log(answerList.value);
+    // console.log(answerList.value);
 
     handleIfShowMore();
-    // console.log(ifShowMore.value);
-
     // 页面下滑事件监听
     window.addEventListener('scroll', throttledScrollHandler);
-
 });
 
 onUnmounted(() => {
@@ -59,17 +54,7 @@ const handleScrollShowMore = async () => {
         if (ifShowMore.value) {
 
             // console.log("showMore")
-            // 获取 新分页
-            // 1.更新页面参数
-            if (ansStore.page.currentPage === 1) { // 第一次分页后从 第3页开始
-                ansStore.page.currentPage = 3;
-            } else {
-                ansStore.page.currentPage++; // 增加页码
-            }
-            if (ansStore.page.pageSize !== 3) { // 尺寸改为3
-                ansStore.page.pageSize = 3;
-            }
-            // 2.调用新分页函数
+            // 调用新分页函数
             await ansStore.fetchAnswerList(props.type, props.parentId);
 
             handleIfShowMore();
@@ -106,11 +91,13 @@ function handleIfShowMore() {
             </div>
             <span class="ans-content" v-html="ans.ansContent"></span>
             <div class="ans-time">编辑于：{{ formatUTCtoLocal(ans.ansTime) }}</div>
-            <LikeButton :likeNum="ans.ansLikeNum" :likeId="ans.ansId" type="answer" />
+            <LikeButton v-model="ans.ansLikeNum" :likeId="ans.ansId" type="answer" />
             <br>
         </div>
         <el-divider></el-divider>
-        <el-main v-loading="ifLoading"></el-main>
+        <el-main v-if="ifLoading">
+            <el-skeleton />
+        </el-main>
     </div>
 </template>
 

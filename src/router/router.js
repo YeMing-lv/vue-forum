@@ -1,6 +1,6 @@
 import { createRouter } from "vue-router";
 import { createWebHistory } from "vue-router";
-import myrequest from '../api/request';
+import { checkToken } from "../api/token";
 
 /** vue-router路由表
  * 路由用 query 传递参数
@@ -38,12 +38,30 @@ const routes = [
     {
         path: '/writting',
         name: 'Writting',
-        component: () => import("../views/Writing/Writing.vue")
+        component: () => import("../views/Writing/Writing.vue"),
+        redirect: '/writting/main',
+        children: [
+            {
+                path: 'main',
+                name: 'WrittingMain',
+                component: () => import("../views/Writing/components/main/MainWrite.vue")
+            },
+            {
+                path: 'create/:type',
+                name: 'Create',
+                component: () => import("../views/Writing/components/create/Create.vue")
+            }
+        ]
     },
     {
         path: '/search',
         name: 'Search',
         component: () => import("../views/Search/Search.vue")
+    },
+    {
+        path: '/userCenter',
+        name: 'UserCenter',
+        component: () => import("../views/UserCenter/UserCenter.vue")
     },
     {
         path: '/:pathMatch(.*)*',
@@ -71,14 +89,19 @@ router.beforeEach(async (to, from, next) => {
             next({ name: 'Login', query: { redirect: to.fullPath } });
         } else {
             // 发送请求校验 token 是否正确
-            await myrequest.checkToken().then((response) => {
-                if (response.code != 200) {
-                    console.log('token校验失败');
+            try {
+                const result = await checkToken();
+                if (result.code != 200) {
+                    console.error('token校验失败:', result.message);
                     next({ name: 'Login', query: { redirect: to.fullPath } });
                 } else {
                     next();
                 }
-            });
+            } catch (error) {
+                console.error("请求检验token失败:", error);
+                next({ name: 'Login', query: { redirect: to.fullPath } });
+            }
+
         }
     }
 });

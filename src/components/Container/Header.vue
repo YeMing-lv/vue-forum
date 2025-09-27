@@ -2,15 +2,12 @@
 import { computed, onMounted, ref } from 'vue';
 import { useUserStore } from '../../store/userPinia';
 import { useQueStore } from '../../store/quePinia';
-import { useAnsStore } from '../../store/ansPinia';
-import { useRoute, useRouter } from 'vue-router';
-import { Search, BellFilled, Comment, Avatar, Setting, SwitchButton } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
+import { Search, BellFilled, Avatar, Setting, SwitchButton, Clock } from '@element-plus/icons-vue';
 
-const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const queStore = useQueStore();
-const ansStore = useAnsStore();
 
 //                          导航栏索引   搜索框历史输入
 const props = defineProps(['headerNav', 'history']);
@@ -45,16 +42,16 @@ const handleQuestionSearch = (queryString, cb) => {
 const handleSearchSelect = (item) => {
     // 过滤数据类型
     if (typeof item.value === "undefined") { // 点击补全输入框里的话题
-        queStore.fetchCurrentQuestion(item.queId).then(
-            ansStore.fetchQueAnswerList(item.queId)
-        )
-        router.push('/question');
+        router.push({
+            path: '/question',
+            query: { id: item.queId }
+        });
     } else if (item.value !== '') { // 输入关键词搜索
         // queStore.fetchSearchQuestionList(item.value);
         router.push({
             name: 'Search',
             query: { keyword: item.value } // 路由传参数keyword
-        }); 
+        });
     }
 }
 
@@ -70,9 +67,9 @@ const handleSearchSelect = (item) => {
                 <ul>
                     <li :class="{ active: props.headerNav === '1' }"><router-link to="/main"
                             style="color: inherit;">首页</router-link></li>
-                    <li :class="{ active: props.headerNav  === '2' }"><router-link to="/article"
+                    <li :class="{ active: props.headerNav === '2' }"><router-link to="/article"
                             style="color: inherit;">文章</router-link></li>
-                    <li :class="{ active: props.headerNav  === '3' }"><router-link to="/writting"
+                    <li :class="{ active: props.headerNav === '3' }"><router-link to="/writting"
                             style="color: inherit;">创作</router-link></li>
                 </ul>
             </div>
@@ -83,14 +80,23 @@ const handleSearchSelect = (item) => {
             </div>
             <div class="header-user">
                 <ul>
-                    <li><el-icon>
+                    <li>
+                        <el-icon>
                             <BellFilled />
-                        </el-icon>消息</li>
+                        </el-icon>消息
+                    </li>
+                    <li>
+                        <el-icon>
+                            <Clock />
+                        </el-icon>历史
+                    </li>
                     <li>
                         <el-popover placement="bottom" trigger="click">
-                            <div class="header-user-head"><el-icon>
-                                    <Avatar />
-                                </el-icon>我的主页</div>
+                            <div class="header-user-head"><router-link to="/usercenter"
+                                    style="color: inherit;"><el-icon>
+                                        <Avatar />
+                                    </el-icon>我的主页</router-link>
+                            </div>
                             <div class="header-user-head"><el-icon>
                                     <Setting />
                                 </el-icon>设置</div>

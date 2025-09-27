@@ -1,11 +1,7 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router';
 import Header from '../../components/Container/Header.vue';
 import QueList from '../../components/List/QueList.vue';
-import { onUnmounted, ref } from 'vue';
-
-const route = useRoute();
-const router = useRouter();
+import { ref } from 'vue';
 
 /** 目前 目前首页 又或者是所有页面
  * 大多都不需要进行数据的获取，发送请求
@@ -41,19 +37,12 @@ const handleSelect = () => {
                     @select="handleSelect()">
                     <el-menu-item index="1" disabled>关注</el-menu-item>
                     <el-menu-item index="2">推荐</el-menu-item>
-                    <el-menu-item index="3" disabled>热榜</el-menu-item>
                 </el-menu>
                 <QueList type="recommend" />
             </div>
-            <div class="content-aside">
+            <div class="aside content-aside">
                 <div>
                     小创作中心
-                </div> -->
-                <div>
-                    文章推荐
-                </div>
-                <div>
-                    推荐关注
                 </div>
             </div>
             <el-backtop :right="100" :bottom="100" />
@@ -80,8 +69,9 @@ const handleSelect = () => {
 }
 
 .content-aside {
-    min-width: 270px;
     padding: 10px;
+    height: 200px;
+    background: #fff;
     box-shadow: 0 1px 8px #d0d0d0;
 }
 </style>

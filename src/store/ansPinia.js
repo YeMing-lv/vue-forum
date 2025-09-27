@@ -1,31 +1,25 @@
 import { defineStore } from "pinia";
-import myrequest from '../api/request';
-import { ref } from "vue";
+import { fetchAnswerListByAuthorId, fetchAnswerList, insertAnswer } from "../api/Answer/AnswerApi";
 
 export const useAnsStore = defineStore('ans', {
     state: () => ({
         answerList: [],
         page: {
-            currentPage: 1,
-            pageSize: 6,
-            total: 0
+            currentPage: 0,
+            pageSize: 0,
+            total: 0,
+            order: null
         },
-        answerIsAgree: [0],
     }),
     actions: {
         init() {
             this.answerList = [];
             this.page = {
-                currentPage: 1,
-                pageSize: 6,
-                total: 0
+                currentPage: 0,
+                pageSize: 0,
+                total: 0,
+                order: null
             };
-        },
-        addAgreedAnswer(ansId) {
-            this.answerIsAgree.push(ansId);
-        },
-        deleteAgreedAnswer(ansId) {
-            this.answerIsAgree = this.answerIsAgree.filter(item => item !== ansId);
         },
 
         /**
@@ -33,8 +27,19 @@ export const useAnsStore = defineStore('ans', {
          * @param {*} id 
          */
         async fetchAnswerList(type, id) {
-            const result = await myrequest.fetchAnswerList(type, this.page, id);
-            
+            // 更新页面参数
+            if (this.page.currentPage === 0 && this.page.pageSize === 0) { // 初始参数改为 1；6
+                this.page.currentPage = 1;
+                this.page.pageSize = 6;
+            } else if (this.page.currentPage === 1 && this.page.pageSize === 6) { // 1；6分页查询后
+                this.page.currentPage = 3;
+                this.page.pageSize = 3;
+            } else {
+                this.page.currentPage++;
+            }
+
+            const result = await fetchAnswerList(type, this.page, id);
+
             // console.log(result);
             if (result.code === 200) {
                 // 1.存储数据总数
@@ -49,9 +54,65 @@ export const useAnsStore = defineStore('ans', {
                 } else {
                     this.answerList = result.data.records;
                 }
+            } else { // 查询分页失败，复原page
+                if (this.page.currentPage === 1 && this.page.pageSize === 6) { // 初始参数改为 1；6
+                    this.page.currentPage = 0;
+                    this.page.pageSize = 0;
+                } else if (this.page.currentPage === 3 && this.page.pageSize === 3) { // 1；6分页查询后
+                    this.page.currentPage = 1;
+                    this.page.pageSize = 6;
+                } else {
+                    this.page.currentPage--;
+                }
             }
             // console.log(this.page);
             // console.log(this.answerList);
+        },
+
+        async fetchAnswerListByAuthorId(authorId, order) {
+            this.page.order = order;
+            // 更新页面参数
+            if (this.page.currentPage === 0 && this.page.pageSize === 0) { // 初始参数改为 1；6
+                this.page.currentPage = 1;
+                this.page.pageSize = 6;
+            } else if (this.page.currentPage === 1 && this.page.pageSize === 6) { // 1；6分页查询后
+                this.page.currentPage = 3;
+                this.page.pageSize = 3;
+            } else {
+                this.page.currentPage++;
+            }
+
+            const result = await fetchAnswerListByAuthorId(authorId, this.page);
+
+            // console.log(result);
+            if (result.code === 200) {
+                // 1.存储数据总数
+                this.page.currentPage = result.data.current;
+                this.page.total = result.data.total;
+
+                // 2.判断 还有没有数据
+                if (this.answerList != []) {
+                    if (this.page.total > this.answerList.length) {
+                        this.answerList = [...this.answerList, ...result.data.records];
+                    }
+                } else {
+                    this.answerList = result.data.records;
+                }
+                return true;
+            } else { // 查询分页失败，复原page
+                if (this.page.currentPage === 1 && this.page.pageSize === 6) { // 初始参数改为 1；6
+                    this.page.currentPage = 0;
+                    this.page.pageSize = 0;
+                } else if (this.page.currentPage === 3 && this.page.pageSize === 3) { // 1；6分页查询后
+                    this.page.currentPage = 1;
+                    this.page.pageSize = 6;
+                } else {
+                    this.page.currentPage--;
+                }
+            }
+            // console.log(this.page);
+            // console.log(this.answerList);
+            return false;
         },
 
         /**
@@ -61,30 +122,14 @@ export const useAnsStore = defineStore('ans', {
          * @param {*} ansContent 
          */
         async insertAnswer(ansAuthorId, ansQueId, ansContent) {
-            const result = await myrequest.insertAnswer(ansAuthorId, ansQueId, ansContent);
-            this.answerList.unshift(result.data);
+            const result = await insertAnswer(ansAuthorId, ansQueId, ansContent);
+            if (result.code === 200) {
+                this.answerList.unshift(result.data);
+                return true;
+            }
+            return false;
         },
 
-        /**
-         * 更新回答 的点赞数
-         * @param {*} upOrDown 
-         * @param {*} id 
-         */
-        async updateAnswerLikeNum(upOrDown, id) {
-            const updateAnswer = ref(this.answerList.find(item => item.ansId === id));
-
-            if (upOrDown === "up") {
-                const result = await myrequest.updateLikeNum('answer', id, updateAnswer.value.ansLikeNum + 1);
-                if (result.data === 1) {
-                    updateAnswer.value.ansLikeNum++;
-                }
-            } else if (upOrDown === "down") {
-                const result = await myrequest.updateLikeNum('answer', id, updateAnswer.value.ansLikeNum - 1);
-                if (result.data === 1) {
-                    updateAnswer.value.ansLikeNum--;
-                }
-            }
-        }
     },
     persist: true
 })

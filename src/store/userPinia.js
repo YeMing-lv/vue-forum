@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
-import myrequest from '../api/request';
+import { userLogin } from "../api/User/UserApi";
+import { fetchAttention } from "../api/Attention/AttentionApi";
+import { insertAttention, deleteAttention } from "../api/Attention/AttentionApi";
+import { fetchUserActions } from "../api/UserActions/UserActionsApi";
 import { useQueStore } from "./quePinia";
 import { useArtStore } from "./artPinia";
 
@@ -10,18 +13,45 @@ export const useUserStore = defineStore('user', {
     state: () => ({
         user: null,
         attention: null,
-        queDraft: [],
-        ansDraft: []
+
+        userActions: [],
+        page: {
+            currentPage: 0,
+            pageSize: 0,
+            total: 0
+        },
+
+        failedVCodeNum: 0, // 验证失败次数
+        failedVCodeTime: null, // 最新 验证失败的 时间 new Date('2024');
+
     }),
     actions: {
         initUser() {
             this.user = null;
             this.attention = null;
-            this.initDraft();
+            this.ifLike = [];
         },
-        initDraft() {
-            this.queDraft = [];
-            this.ansDraft = [];
+        initUserActions() {
+            this.userActions = [];
+            this.page = {
+                currentPage: 0,
+                pageSize: 0,
+                total: 0
+            };
+        },
+        initFailedVCode() {
+            this.failedVCodeNum = 0;
+            this.failedVCodeTime = 0;
+        },
+
+        ifReVCode() {
+            const waitTime = 3 * 60 * 1000; // 三分钟
+            const nowDate = new Date();
+            if (this.failedVCodeTime != null) {
+                const failedTime = new Date(this.failedVCodeTime);
+                return (nowDate - failedTime) > waitTime;
+            }
+            return false;
         },
 
         /**
@@ -30,10 +60,15 @@ export const useUserStore = defineStore('user', {
          * @param {*} password 
          */
         async userLogin(account, password) {
-            const result = await myrequest.userLogin(account, password);
-            this.user = result.data.user;
-            localStorage.setItem("token", result.data.token);
-            console.log(localStorage.getItem("token"))
+            const result = await userLogin(account, password);
+            console.log(result);
+            if (result.code === 200) {
+                this.user = result.data.user;
+                localStorage.setItem("token", result.data.token);
+                console.log(localStorage.getItem("token"))
+                return true;
+            }
+            return false;
         },
 
         /**
@@ -41,40 +76,12 @@ export const useUserStore = defineStore('user', {
          * @param {*} id 
          */
         async fetchAttention() {
-            const result = await myrequest.fetchAttention(this.user.userId);
-            this.attention = result.data;
-        },
-
-        /**
-         * 获取用户 指定 草稿箱
-         */
-        async fetchDraft(type) {
-            const result = await myrequest.fetchDraft(this.user.userId, type);
-
+            const result = await fetchAttention(this.user.userId);
             if (result.code === 200) {
-                if (type === 'question') {
-                    this.queDraft = result.data;
-                } else if (type === 'answer') {
-                    this.ansDraft = result.data;
-                }
+                this.attention = result.data;
+                return true;
             }
-        },
-
-        /**
-         * 删除指定种类 草稿
-         * @param {*} type 
-         * @param {*} draId 
-         */
-        async deleteDraft(type, id) {
-            const result = await myrequest.deleteDraft(id);
-
-            if (result.code === 200) {
-                if (type === 'question') {
-                    this.queDraft = this.queDraft.filter(draft => draft.draId != id);
-                } else if (type === 'answer') {
-                    this.ansDraft = this.ansDraft.filter(draft => draft.draId != id);
-                }
-            }
+            return false;
         },
 
         /**
@@ -96,7 +103,7 @@ export const useUserStore = defineStore('user', {
          * @param {*} attFollowed 
          */
         async insertAttention(attType, attFollowed, parentType) {
-            const result = await myrequest.insertAttention(this.user.userId, attType, attFollowed);
+            const result = await insertAttention(this.user.userId, attType, attFollowed);
 
             if (result.code !== 200) {
                 return false;
@@ -124,8 +131,8 @@ export const useUserStore = defineStore('user', {
             const attId = this.attention.find(item => item.attFollowed === id).attId;
             if (attId == null) return false;
 
-            const result = await myrequest.deleteAttention(attId);
-            console.log(result);
+            const result = await deleteAttention(attId);
+            // console.log(result);
 
             // 先验证
             if (result.code !== 200) {
@@ -142,6 +149,54 @@ export const useUserStore = defineStore('user', {
                 artStore.author.userFollowersNum--;
             } // 其它：关注回答作者 不用更新数量
             return true;
+        },
+
+        /**
+         * 获取 用户动态列表
+         * @param {*} id 
+         * @param {*} page 
+         */
+        async fetchUserActions() {
+            // 更新页面参数
+            if (this.page.currentPage === 0 && this.page.pageSize === 0) { // 初始参数改为 1；6
+                this.page.currentPage = 1;
+                this.page.pageSize = 6;
+            } else if (this.page.currentPage === 1 && this.page.pageSize === 6) { // 1；6分页查询后
+                this.page.currentPage = 3;
+                this.page.pageSize = 3;
+            } else {
+                this.page.currentPage++;
+            }
+            // console.log(this.page);
+            const result = await fetchUserActions(this.user.userId, this.page);
+
+            // console.log(result);
+            if (result.code === 200) {
+                // 1.存储数据总数
+                this.page.currentPage = result.data.current;
+                this.page.total = result.data.total;
+
+                // 2.存储 并 判断 还有没有数据
+                if (this.userActions != []) {
+                    if (this.page.total > this.userActions.length) {
+                        this.userActions = [...this.userActions, ...result.data.records];
+                    }
+                } else {
+                    this.userActions = result.data.records;
+                }
+            } else { // 查询分页失败，复原page
+                if (this.page.currentPage === 1 && this.page.pageSize === 6) { // 初始参数改为 1；6
+                    this.page.currentPage = 0;
+                    this.page.pageSize = 0;
+                } else if (this.page.currentPage === 3 && this.page.pageSize === 3) { // 1；6分页查询后
+                    this.page.currentPage = 1;
+                    this.page.pageSize = 6;
+                } else {
+                    this.page.currentPage--;
+                }
+            }
+            // console.log(this.page);
+            // console.log(this.userActions);
         }
     },
     persist: true

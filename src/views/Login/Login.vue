@@ -1,9 +1,10 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import myrequest from '../../api/request';
+import { userRegister } from '../../api/User/UserApi';
 import { useUserStore } from '../../store/userPinia';
 import Vcode from "vue3-puzzle-vcode";
+import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,19 +15,25 @@ const logAndRegFormRef = ref(); //表单实例（组件库自带的方法，不�
 const title = ref('登录'); //头部标题
 const isLogOrReg = ref(true); //登录和注册状态
 const pointer = ref(''); //底部提示词
-const ifShowVcode = ref(false); // 是否显示验证码
-const ifSuccessVcode = ref(false); // 是否通过验证码
-const numFailVcode = ref(0); // 验证失败次数
 const user = reactive({ // 输入的用户信息
     name: '',
     account: '',
     password: '',
 });
+const ifShowVcode = ref(false); // 是否显示验证码
+const ifSuccessVcode = ref(false); // 是否通过验证码
 
+// 挂载时清理用户信息
 onMounted(() => {
+    
     userStore.initUser(); // 清除UserStore token在路由守卫里就清除了
-})
 
+    // 是否可以再次进行 登录注册
+    if (userStore.ifReVCode()) {
+        userStore.initFailedVCode();
+    }
+})
+//========================登录或注册========================
 //切换登录和注册状态
 function logOrReg() {
     if (isLogOrReg.value === true) {
@@ -46,7 +53,7 @@ function logOrReg() {
     }
 }
 
-//按钮绑定事件 触发表单校验 提交登录或注册信息
+//按钮绑定事件 触发表单校验 验证码验证
 const handleButton = async (formEl) => {
     if (!formEl) return;
     // 手动触发校验
@@ -54,44 +61,16 @@ const handleButton = async (formEl) => {
         if (valid) {
             // console.log(user, 'submit');
 
-            // 滑动验证码验证
-            // ifShowVcode.value = true;
-
-            if (isLogOrReg.value && !ifSuccessVcode.value) {
-                //提交登录信息
-                userStore.userLogin(user.account, user.password).then(async () => {
-
-                    // 获取登录结果的user数据
-                    const fetchLoginResult = userStore.user;
-                    if (fetchLoginResult != null) {
-                        //登录成功
-
-                        // 获取用户个人信息外的一些数据
-                        // 获取用户的关注关系数据
-                        await userStore.fetchAttention(fetchLoginResult.userId);
-
-                        //获取重定向地址，如果没有就直接跳转到首页
-                        const redirectPath = route.query.redirect || '/main';
-                        router.push(redirectPath);
-                    } else {
-                        // 登录失败
-                        pointer.value = "用户未注册";
-                    }
-                })
-            } else if (!isLogOrReg.value && !ifSuccessVcode.value) {
-                //提交注册信息
-                myrequest.userRegister(user.name, user.account, user.password).then((result) => {
-                    //注册成功
-                    if (result.code === 200) {
-                        logOrReg();
-                        pointer.value = "用户注册成功";
-                    }
-                })
+            if (!userStore.ifReVCode()) { // 还不能进行登录注册
+                ElMessage.error("还不能进行登录注册!");
+                return;
             }
+            // 滑动验证码验证
+            ifShowVcode.value = true;
         }
     })
 };
-
+// ======================表单管理=======================
 //表单校验规则
 const rules = reactive({
     name: [
@@ -123,19 +102,61 @@ const resetForm = (formEl) => {
     if (!formEl) return;
     formEl.resetFields();
 }
-
-// 滑动验证成功
-const handleSuccessVcode = () => {
+//=======================滑动验证============================
+// 滑动验证成功 进行登录、注册
+const handleSuccessVcode = async () => {
     ifSuccessVcode.value = true;
-    numFailVcode.value = 0;
+    userStore.initFailedVCode();
+
+    if (isLogOrReg.value && ifSuccessVcode.value) {
+        try {
+            //提交登录信息
+            const result = await userStore.userLogin(user.account, user.password);
+            if (result) { //登录成功
+                // 获取用户的关注关系数据
+                const attentionResult = await userStore.fetchAttention();
+                if (attentionResult) {
+                    //获取重定向地址，如果没有就直接跳转到首页
+                    const redirectPath = route.query.redirect || '/main';
+                    router.push(redirectPath);
+                }
+            } else {
+                // 登录失败
+                ElMessage.error("登录失败")
+            }
+        } catch (error) {
+            console.error("请求登录失败:", error);
+            ElMessage.error("请求登录失败");
+        }
+    } else if (!isLogOrReg.value && ifSuccessVcode.value) {
+        try {
+            //提交注册信息
+            const result = await userRegister(user.name, user.account, user.password);
+            //注册成功
+            if (result.code === 200) {
+                logOrReg();
+                ElMessage.success("注册成功");
+            } else {
+                ElMessage.error("注册失败");
+            }
+        } catch (erro) {
+            console.error("请求注册失败:", error);
+            ElMessage.error("请求注册失败");
+        }
+    }
     handleCloseVcode();
 }
 
 // 滑动验证失败
 const handleFailVcode = () => {
-    numFailVcode.value = numFailVcode.value+1;
-    if (numFailVcode.value ) {
-        
+    userStore.failedVCodeNum++;
+    if (userStore.failedVCodeNum % 5 == 4) { // 取余数
+        ElMessage.warning("还有一次验证机会！");
+    }
+    if (userStore.failedVCodeNum % 5 == 0 && userStore.failedVCodeNum != 0) {
+        ElMessage.error("验证失败达到5次，请等待3分钟后再进行登录注册！");
+        userStore.failedVCodeTime = new Date();
+        handleCloseVcode();
     }
 }
 
@@ -168,13 +189,14 @@ const handleCloseVcode = () => ifShowVcode.value = false;
                         <el-form-item style="margin-right: 10px;">
                             <el-button type="primary" @click="handleButton(logAndRegFormRef)">{{ title }}</el-button>
                         </el-form-item>
-                        <el-form-item >
+                        <el-form-item>
                             <el-button @click="resetForm(logAndRegFormRef)">清空</el-button>
                         </el-form-item>
                     </el-form>
                 </el-form>
                 <div class="pointer">{{ pointer }}</div>
-                <Vcode :show="ifShowVcode" @success="handleSuccessVcode" @fail="handleFailVcode" @close="handleCloseVcode"/>
+                <Vcode :show="ifShowVcode" @success="handleSuccessVcode" @fail="handleFailVcode"
+                    @close="handleCloseVcode" />
                 <br>
                 <span>测试：xiaoming@example.com xiaoming123</span>
             </div>

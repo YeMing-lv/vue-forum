@@ -1,47 +1,59 @@
 <script setup>
-import { computed } from 'vue';
-import { useQueStore } from '../../store/quePinia';
-import { useAnsStore } from '../../store/ansPinia';
-
+import { uselikeRecordsStore } from '../../store/likeRecordsPinia';
+import { insertOrUpdateUserActions } from '../../api/UserActions/UserActionsApi';
+import { updateAnswerLikeNum } from '../../api/Answer/AnswerApi';
+import { updateQuestionLikeNum } from '../../api/Question/QuestionApi';
 import { CaretTop } from '@element-plus/icons-vue';
+import { useUserStore } from '../../store/userPinia';
 
-const queStore = useQueStore();
-const ansStore = useAnsStore();
-
-const answerIsAgree = computed(() => ansStore.answerIsAgree);
-const questionIsAgree = computed(() => queStore.questionIsAgree);
+const likeRecordsPinia = uselikeRecordsStore();
+const userStore = useUserStore();
+const userId = userStore.user.userId;
 
 // 话题点赞、回答点赞
-const props = defineProps(['likeNum', 'likeId', 'type']);
-// que.answerWithUser.ansLikeNum
+const props = defineProps(['likeId', 'type']);
+const likeNum = defineModel();
 
 // 赞同点击事件
 const agree = async () => {
     if (props.likeId === null && props.type === null) return;
 
-    if (props.type === 'question') { // 点赞话题
-        if (questionIsAgree.value.includes(props.likeId)) {
-            await queStore.updateQuestionLikeNum('down', props.likeId);
-            queStore.deleteAgreedQuestion(props.likeId);
-        } else {
-            await queStore.updateQuestionLikeNum('up', props.likeId);
-            queStore.addAgreedQuestion(props.likeId);
+    // 判断是否有点赞记录 修改likeNum点赞数
+    if (likeRecordsPinia.haveLikeRecord(props.likeId)) { // 有点赞记录，进行取消点赞
+        if (props.type == 'answer') {
+            const result = await updateAnswerLikeNum(props.likeId, likeNum.value - 1)
+            if (result.code === 200) { // 取消点赞 成功，前端点赞数 - 1
+                likeNum.value = likeNum.value - 1;
+                // 前端删除点赞记录
+                likeRecordsPinia.deleteLikeRecord(props.likeId);
+            }
+        } else if (props.type == 'question') {
+            const result = await updateQuestionLikeNum(props.likeId, likeNum.value - 1)
+            if (result.code === 200) { // 取消点赞 成功，前端点赞数 - 1
+                likeNum.value = likeNum.value - 1;
+                // 前端删除点赞记录
+                likeRecordsPinia.deleteLikeRecord(props.likeId);
+            }
         }
-    } else if (props.type === 'answer') { // 点赞回答
-        if (answerIsAgree.value.includes(props.likeId)) { // 已经点赞过了
-            await ansStore.updateAnswerLikeNum('down', props.likeId);
-            ansStore.deleteAgreedAnswer(props.likeId);
-        } else { // 还没点赞过i
-            await ansStore.updateAnswerLikeNum('up', props.likeId);
-            ansStore.addAgreedAnswer(props.likeId);
-        }
-    } else if (props.type === 'queListAnswer') { // 点赞话题列表中 回答
-        if (answerIsAgree.value.includes(props.likeId)) { // 已经点赞过了
-            await queStore.updateQueListAnswerLikeNum('down', props.likeId);
-            ansStore.deleteAgreedAnswer(props.likeId);
-        } else { // 还没点赞过i
-            await queStore.updateQueListAnswerLikeNum('up', props.likeId);
-            ansStore.addAgreedAnswer(props.likeId);
+    } else { // 没有点赞记录，创建点赞
+        if (props.type == 'answer') {
+            const result = await updateAnswerLikeNum(props.likeId, likeNum.value + 1)
+            if (result.code === 200) { // 创建点赞成功，前端点赞数 + 1
+                likeNum.value = likeNum.value + 1;
+                // 更新或插入用户动态
+                insertOrUpdateUserActions(userId, 'like', props.likeId, props.type);
+                // 前端添加点赞记录
+                likeRecordsPinia.addLikeRecord(props.likeId);
+            }
+        } else if (props.type == 'question') {
+            const result = await updateQuestionLikeNum(props.likeId, likeNum.value + 1)
+            if (result.code === 200) { // 创建点赞成功，前端点赞数 + 1
+                likeNum.value = likeNum.value + 1;
+                // 更新或插入用户动态
+                insertOrUpdateUserActions(userId, 'like', props.likeId, props.type);
+                // 前端添加点赞记录
+                likeRecordsPinia.addLikeRecord(props.likeId);
+            }
         }
     }
 }
@@ -49,18 +61,18 @@ const agree = async () => {
 
 <template>
     <!-- 回答点赞的按钮 -->
-    <el-button v-if="props.likeNum != null && props.type != null && props.type != 'question'" type="primary" plain
+    <el-button v-if="likeNum != null && props.type != null && props.type != 'question'" type="primary" plain
         @click="agree">
         <el-icon style="margin-right: 5px;">
             <CaretTop />
         </el-icon>
-        赞同{{ props.likeNum }}
+        赞同{{ likeNum }}
     </el-button>
 
     <!-- 话题点赞的按钮 -->
-    <el-button v-if="props.likeNum != null && props.type != null && props.type === 'question'" text @click="agree">
+    <el-button v-if="likeNum != null && props.type != null && props.type === 'question'" text @click="agree">
         <img class="que-like-img" src="/public/image/like.png" alt="like">
-        点赞{{ props.likeNum }}
+        点赞{{ likeNum }}
     </el-button>
 </template>
 

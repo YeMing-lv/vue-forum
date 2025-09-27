@@ -1,5 +1,20 @@
-# Vue 3 + Vite
+论坛系统
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+项目介绍：该论坛系统是基于Vue3+SSM前后端分离的论坛交流系统，仿照知乎的设计，共分为话题展示模块、话题详情模块、用户个人界面、创作中心四大模块。目前还欠缺不少功能模块。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+实现功能：
+    展示模块能够显示话题和文章信息列表，可以下滑窗口显示新的信息；输入关键词搜索，会分为话题和文章来显示搜索结果。
+    详情页面显示话题的详细信息，可以进行点赞、评论编辑（用到WangEditor编辑器）、关注、下滑显示评论等操作。
+    个人页面分类显示用户个人动态、发表的话题和文章等。
+    创作中心暂时只能编辑话题和文章，带有草稿箱，使用到WangEditor编辑器。
+
+预览图：
+    1、登录页面，有表单校验、验证码功能：
+
+    2、首页：
+    
+    3、话题详情页：
+
+    4、个人主页：
+
+    5、创作中心（暂时只有内容创作功能）：

@@ -5,12 +5,15 @@ import AnswerList from '../../components/List/AnswerList.vue';
 import Editor from '../../components/Editor/Editor.vue';
 import FollowButton from '../../components/Button/FollowButton.vue';
 import LikeButton from '../../components/Button/LikeButton.vue';
+import ReviseDialog from './components/ReviseDialog.vue';
 
+import { useUserStore } from '../../store/userPinia';
 import { useQueStore } from '../../store/quePinia';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
 
 const route = useRoute();
+const userStore = useUserStore();
 const queStore = useQueStore();
 
 const queId = route.query.id;
@@ -18,25 +21,29 @@ const queId = route.query.id;
 // 当前话题的数据
 const currentQuestion = computed(() => queStore.currentQuestion);
 const tagList = computed(() => {
-    return currentQuestion.value?.queTag?.split(',') || []; // ????????
+    return currentQuestion.value?.queTag?.split(',') || [];
 });
 const author = computed(() => queStore.author);
 
 const ifLoading = ref(false);
 const ifEdit = ref(false); // 控制编辑器显示
-
+const ifRevise = ref(false); // 控制 修改对话框 显示
+const ifAuthor = ref(false); // 控制 修改的按钮 显示
 
 // 获取话题详情
 onMounted(async () => {
-
     queStore.initDetail();
     // 获取数据
     await queStore.fetchCurrentQuestion(queId);
+    document.title = currentQuestion.value.queTitle;
 
     // 进入详情页自动增加话题浏览数
     if (queStore.currentQuestion != null) {
         queStore.increaseQueBrowseNum(queId);
     }
+
+    // 判断登录用户是否为作者
+    handleIfAuthor();
 });
 
 onUnmounted(() => {
@@ -49,12 +56,18 @@ const handleEditor = (data) => {
     ifEdit.value = !ifEdit.value;
 }
 
+// 判断 登录用户是否为作者
+const handleIfAuthor = () => {
+    if (userStore.user.userId === currentQuestion.value.queAuthorId) { // 是作者
+        ifAuthor.value = true;
+    }
+}
+
 </script>
 
 <template>
     <div class="question">
         <Header headerNav="0" />
-
         <div v-if="currentQuestion" class="que-header">
             <div class="que-header-left">
                 <el-tag v-for="tag in tagList" :key="tag" style="margin: 0 10px 10px 0;">
@@ -63,14 +76,20 @@ const handleEditor = (data) => {
                 <div class="title">{{ currentQuestion.queTitle }}</div>
                 <div class="content" v-html="currentQuestion.queContent"></div>
                 <div class="other">
-                    <FollowButton :followedId="currentQuestion.queId" type="question"/>
+                    <FollowButton :followedId="currentQuestion.queId" type="question" />
 
                     <el-button @click="handleEditor"><el-icon>
                             <EditPen />
                         </el-icon>{{ ifEdit ? "编辑回答" : "写回答" }}</el-button>
-                        
                     <div class="like">
-                        <LikeButton :likeNum="currentQuestion.queLikeNum" :likeId="currentQuestion.queId" type="question" />
+                        <LikeButton v-model="currentQuestion.queLikeNum" :likeId="currentQuestion.queId"
+                            type="question" />
+                    </div>
+                    <div v-if="ifAuthor">
+                        <el-button text @click="() => ifRevise = true"><el-icon>
+                                <EditPen />
+                            </el-icon>修改话题</el-button>
+                        <ReviseDialog v-if="ifRevise" v-model="ifRevise" :question="currentQuestion" />
                     </div>
                 </div>
             </div>
@@ -87,9 +106,9 @@ const handleEditor = (data) => {
 
         <div class="container que-content">
             <div class="que-answer">
-                <AnswerList :parentId="queId" type="question"/>
+                <AnswerList :parentId="queId" type="question" />
             </div>
-            <div class="que-aside">
+            <div class="aside que-aside">
                 <div v-if="author" class="aside-author">
                     <div class="author-legend">关于作者</div>
                     <div class="author-top">
@@ -105,11 +124,8 @@ const handleEditor = (data) => {
                         <div class="author-followers">关注者<br>{{ author.userFollowersNum }}</div>
                     </div>
                     <div class="author-bottom">
-                        <FollowButton :followedId="author.userId" type="user" parentType="question"/>
+                        <FollowButton :followedId="author.userId" type="user" parentType="question" />
                     </div>
-                </div>
-                <div>
-                    推荐
                 </div>
             </div>
         </div>
@@ -118,6 +134,10 @@ const handleEditor = (data) => {
 </template>
 
 <style scoped>
+.question {
+    position: relative;
+}
+
 .que-header {
     display: flex;
     margin: 0 auto 10px auto;
@@ -143,7 +163,7 @@ const handleEditor = (data) => {
 }
 
 .que-header-left .other {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     margin: 10px auto 0 auto;
 }
@@ -173,7 +193,9 @@ const handleEditor = (data) => {
 .que-content {
     display: flex;
     width: 1050px;
+    min-height: 300px;
     margin: 0 auto;
+
 }
 
 .que-answer {
@@ -185,6 +207,8 @@ const handleEditor = (data) => {
 
 .que-aside {
     min-width: 270px;
+    align-self: flex-start;
+    /* 父容器为flex 必须添加 */
 }
 
 .aside-author {

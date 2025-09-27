@@ -49,7 +49,7 @@ onUnmounted(() => {
 const toArticle = (id) => {
     router.push({
         path: '/articleDetail',
-        query: { id: id}
+        query: { id: id }
     });
 }
 
@@ -124,11 +124,12 @@ const processedHTML = (htmlInput) => {
         </div>
         <el-divider></el-divider>
     </div>
-    <el-main v-loading="ifLoading"></el-main>
+    <el-main v-if="ifLoading">
+        <el-skeleton />
+    </el-main>
 </template>
 
 <style scoped>
-
 .content-list {
     padding: 0 10px;
     min-width: 100%;

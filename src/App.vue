@@ -25,4 +25,11 @@ import { RouterView } from 'vue-router';
   margin: 0 auto;
   padding: 0 20px;
 }
+
+.aside {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    min-width: 250px;
+}
 </style>
