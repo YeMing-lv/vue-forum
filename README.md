@@ -9,12 +9,17 @@
     创作中心暂时只能编辑话题和文章，带有草稿箱，使用到WangEditor编辑器。
 
 预览图：
-    1、登录页面，有表单校验、验证码功能：
+1、登录页面，有表单校验、验证码功能：
+<img width="1920" height="1032" alt="屏幕截图 2025-09-27 160234" src="https://github.com/user-attachments/assets/ed6c9351-d30f-40a8-8ed0-a3dcf5cbbe77" />
 
-    2、首页：
+2、首页：
+<img width="1920" height="1032" alt="屏幕截图 2025-09-27 160357" src="https://github.com/user-attachments/assets/1401e130-eda4-4cf8-a353-3a031bb0219f" />
 
-    3、话题详情页：
+3、话题详情页：
+<img width="1920" height="1032" alt="屏幕截图 2025-09-27 160424" src="https://github.com/user-attachments/assets/85b7e0b0-b387-4c93-9e17-0c6a650178a1" />
 
-    4、个人主页：
+4、个人主页：
+<img width="1920" height="1032" alt="屏幕截图 2025-09-27 160538" src="https://github.com/user-attachments/assets/aa50a089-57ca-4f31-8209-96e2999b7c9f" />
 
-    5、创作中心（暂时只有内容创作功能）：
+5、创作中心（暂时只有内容创作功能）：
+<img width="1920" height="1032" alt="屏幕截图 2025-09-27 160547" src="https://github.com/user-attachments/assets/cd0bdb82-d9ce-49fa-981c-b2a861bd06cc" />
