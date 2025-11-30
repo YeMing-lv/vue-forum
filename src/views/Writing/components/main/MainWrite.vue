@@ -17,21 +17,30 @@ onMounted(() => {
 </script>
 
 <template>
-    <el-row class="row">
+    <el-row class="row" :gutter="20">
         <el-col :span="6" class="col">
-            <el-statistic title="近日浏览数" :value="212019"></el-statistic>
-        </el-col>
-        <el-col :span="4" class="col">
-            <el-statistic>
-                <template #title>
-                    <div>插槽标题</div>
-                </template>
-                <template #suffix>/100</template>
-            </el-statistic>
+            <div class="col-content"> <el-statistic title="近 7 日浏览数" :value="212019"></el-statistic>
+            </div>
         </el-col>
         <el-col :span="6" class="col">
-            <el-statistic :value="value2"></el-statistic>
-            <el-countdown title="Remaining VIP time" format="HH:mm:ss" :value="value1" />
+            <div class="col-content">
+                <el-statistic title="近 7 日点赞数" :value="2019"></el-statistic>
+            </div>
+        </el-col>
+        <el-col :span="6" class="col">
+            <div class="col-content">
+                <el-statistic title="近 7 日关注增长数" :value="19"></el-statistic>
+            </div>
+        </el-col>
+        <el-col :span="6" class="col">
+            <div class="col-content">
+                <el-statistic>
+                    <template #title>
+                        <span>近 7 日发表话题 / 文章</span>
+                    </template>
+                    <template #suffix>/10</template>
+                </el-statistic>
+            </div>
         </el-col>
     </el-row>
 </template>
@@ -40,10 +49,19 @@ onMounted(() => {
 .row {
     padding: 20px;
 
-    .row el-col {
-        background: #d0d0d0;
+    .col {
+
+        .col-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            min-width: 150px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
     }
 
-    .col {}
 }
 </style>

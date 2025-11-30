@@ -1,7 +1,7 @@
 <script setup>
 import Header from '../../components/Container/Header.vue';
 import QueList from '../../components/List/QueList.vue';
-import { ref } from 'vue';
+import { ref , onMounted } from 'vue';
 
 /** 目前 目前首页 又或者是所有页面
  * 大多都不需要进行数据的获取，发送请求
@@ -20,6 +20,10 @@ import { ref } from 'vue';
 // onUnmounted()
 
 const activeMenuIndex = ref('2');
+
+onMounted(() => {
+    document.title = "首页";
+});
 
 // 导航栏 选择处理
 const handleSelect = () => {

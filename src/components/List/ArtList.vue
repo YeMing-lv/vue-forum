@@ -47,10 +47,11 @@ onUnmounted(() => {
 
 // 跳转到文章页面
 const toArticle = (id) => {
-    router.push({
+    const routerData = router.resolve({
         path: '/articleDetail',
-        query: { id: id }
+        query: { id: id}
     });
+    window.open(routerData.href, '_blank');
 }
 
 // 滚动 显示更多的话题

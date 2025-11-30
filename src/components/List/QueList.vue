@@ -49,10 +49,11 @@ onUnmounted(() => {
 
 // 跳转到话题页面，要先获取que话题和对应ans回答数据
 const toQuestion = (id) => {
-    router.push({
+        const routerData = router.resolve({
         path: '/question',
-        query: { id: id }
+        query: { id: id}
     });
+    window.open(routerData.href, '_blank');
 }
 
 // 滚动 显示更多的话题
@@ -77,8 +78,6 @@ const handleScrollShowMore = async () => {
             }
 
             handleIfShowMore();
-
-
         }
     }
     ifLoading.value = false; // 隐藏加载动画
@@ -143,6 +142,7 @@ const changeHTMLToText = (html) => {
 .content-answer {
     display: flex;
     margin-bottom: 5px;
+    padding-right: 30px;
     font-size: 14px;
     cursor: pointer;
 }

@@ -1,24 +1,41 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useUserStore } from '../../store/userPinia';
 import { useQueStore } from '../../store/quePinia';
+import { useBrowHistoryStore } from '../../store/browHistoryPinia';
 import { useRouter } from 'vue-router';
 import { Search, BellFilled, Avatar, Setting, SwitchButton, Clock } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { formatUTCtoLocal } from '../../utils/timeUtils';
 
+/**
+ * 头部导航栏组件
+ *  功能：模块跳转、搜索栏、消息（未实现）、浏览历史、退出登录...
+ */
 const router = useRouter();
 const userStore = useUserStore();
 const queStore = useQueStore();
+const browHistoryStore = useBrowHistoryStore();
 
 //                          导航栏索引   搜索框历史输入
 const props = defineProps(['headerNav', 'history']);
-const userHeadImage = computed(() => userStore.user.userHead);
 const autoComQuestionList = computed(() => queStore.searchAutoCompleteQuestionList);
-
 // 输入框输入
 const searchInput = ref(props.history); // 显示上一次的 历史搜索
 
+const userHeadImage = computed(() => userStore.user.userHead);
+// 用户浏览历史
+const userBrowseHistory = computed(() => browHistoryStore.browseHistoryList);
+const browLoading = ref(false);
+const ifShowMore = ref(true);
+
 onMounted(() => {
-    // console.log(headerNavActive.value)
+    // console.log(headerNavActive.value);
+})
+
+// 销毁浏览历史列表数据
+onUnmounted(() => {
+    browHistoryStore.init();
 })
 
 // 退出登录
@@ -55,6 +72,55 @@ const handleSearchSelect = (item) => {
     }
 }
 
+// 获取登录用户浏览历史
+const getBrowHistory = async () => {
+    if (browLoading.value) return; // 如果正在进行加载，阻止重复触发
+    if (!ifShowMore.value) return; 
+    
+    browLoading.value = true;
+    const dateBetween = {
+        startTime: 0,
+        endTime: 0
+    }
+    const result = await browHistoryStore.fetchUserBrowseHistory("question", dateBetween, userStore.user.userId);
+    if (!result) {
+        ElMessage.error("获取浏览历史失败！");
+    }
+    handleIfShowMore();
+    console.log(userBrowseHistory.value);
+    browLoading.value = false;
+}
+
+// 关闭浏览历史弹窗时，销毁数据
+const initBrowHisStore = () => {
+    browHistoryStore.init();
+}
+
+// 是否还有列表数据要显示
+function handleIfShowMore() {
+    if (userBrowseHistory.value != null) {
+        if (userBrowseHistory.value.length < browHistoryStore.page.total) {
+            ifShowMore.value = true;
+        } else {
+            ifShowMore.value = false;
+        }
+    }
+}
+
+// 跳转讨论或文章详情页
+const toDetail = (itemType, id) => {
+    if (itemType == 'question') {
+        router.push({
+            path: '/question',
+            query: { id: id }
+        });
+    } else if (itemType == 'article') {
+        router.push({
+            path: '/article',
+            query: { id: id }
+        });
+    }
+}
 </script>
 
 <template>
@@ -86,9 +152,24 @@ const handleSearchSelect = (item) => {
                         </el-icon>消息
                     </li>
                     <li>
-                        <el-icon>
-                            <Clock />
-                        </el-icon>历史
+                        <el-popover v-loading="browLoading" :width="300" placement="bottom" trigger="hover"
+                            @before-enter="getBrowHistory" @after-leave="browHistoryStore.init()">
+                            <ul class="browse-history" v-infinite-scroll="getBrowHistory">
+                                <li class="browse-history-item" v-for="value in userBrowseHistory"
+                                    @click="toDetail(value.itemType, value.item.id)">
+                                    <p class="title">{{ value.item.queTitle }}</p>
+                                    <p class="time">{{ formatUTCtoLocal(value.time) }}</p>
+                                </li>
+                            </ul>
+                            <template #reference>
+                                <div style="display: flex;flex-direction: column;align-items: center;">
+                                    <el-icon>
+                                        <Clock />
+                                    </el-icon>
+                                    <p>历史</p>
+                                </div>
+                            </template>
+                        </el-popover>
                     </li>
                     <li>
                         <el-popover placement="bottom" trigger="click">
@@ -114,85 +195,117 @@ const handleSearchSelect = (item) => {
     </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .header {
     min-width: 100vw;
     height: 50px;
     background: #fff;
     box-shadow: 0 1px 8px #d0d0d0;
+
+    .header-container {
+        display: flex;
+        margin: auto 151px;
+        height: 50px;
+        align-items: center;
+    }
+
+    .header-logo {
+        float: left;
+        margin-right: 40px;
+    }
+
+    .header-logo img {
+        width: 45px;
+        height: 45px;
+        cursor: pointer;
+    }
+
+    .header-nav ul {
+        list-style-type: none;
+    }
+
+    .header-nav li {
+        float: left;
+        margin: auto 20px;
+        color: #a0a0a0;
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+        transition: all 0.6s;
+    }
+
+    .header-nav li:hover {
+        color: black;
+    }
+
+    .header-nav li.active {
+        color: black;
+        border-bottom: 5px #409EFF solid;
+    }
+
+    .header-search {
+        flex-grow: 2;
+        margin: 0 40px;
+    }
+
+    .header-user {
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            float: left;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: auto 15px;
+            color: #707070;
+            font-size: 14px;
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            cursor: pointer;
+
+            img {
+                width: 20px;
+                height: 20px;
+            }
+
+            &:hover {
+                color: #505050;
+            }
+        }
+    }
+
 }
 
-.header-container {
-    display: flex;
-    margin: auto 151px;
-    height: 50px;
-    align-items: center;
-}
-
-.header-logo {
-    float: left;
-    margin-right: 40px;
-}
-
-.header-logo img {
-    width: 45px;
-    height: 45px;
-    cursor: pointer;
-}
-
-/* .header-nav {} */
-
-.header-nav ul {
+.browse-history {
+    max-width: 300px;
+    height: 200px;
+    padding: 0;
+    margin: 0;
     list-style-type: none;
-}
+    overflow-y: auto;
+    overflow-x: hidden;
 
-.header-nav li {
-    float: left;
-    margin: auto 20px;
-    color: #a0a0a0;
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    transition: all 0.6s;
-}
+    .browse-history-item {
+        margin-bottom: 4px;
+        width: 100%;
+        padding: 5px;
+        cursor: pointer;
 
-.header-nav li:hover {
-    color: black;
-}
+        .title {
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; // 超出部分省略号
+        }
 
-.header-nav li.active {
-    color: black;
-    border-bottom: 5px #409EFF solid;
-}
+        .time {
+            margin: 4px 0 0 0;
+            font-size: 12px;
+        }
 
-.header-search {
-    flex-grow: 2;
-    margin: 0 40px;
-}
-
-.header-user {}
-
-.header-user ul {
-    list-style-type: none;
-}
-
-.header-user li {
-    float: left;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: auto 15px;
-    color: #707070;
-    font-size: 14px;
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    cursor: pointer;
-}
-
-.header-user li:hover {
-    color: #505050;
-}
-
-.header-user li img {
-    width: 20px;
-    height: 20px;
+        &:hover {
+            background: #efefef;
+        }
+    }
 }
 
 .header-user-head {
@@ -201,9 +314,9 @@ const handleSearchSelect = (item) => {
     padding: 5px;
     font-size: 16px;
     cursor: pointer;
-}
 
-.header-user-head:hover {
-    background: #d0d0d0;
+    &:hover {
+        background: #d0d0d0;
+    }
 }
 </style>

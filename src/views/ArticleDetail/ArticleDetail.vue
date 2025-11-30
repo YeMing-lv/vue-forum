@@ -5,10 +5,13 @@ import Header from '../../components/Container/Header.vue';
 import Answer from '../../components/List/AnswerList.vue';
 import Editor from '../../components/Editor/Editor.vue';
 import FollowButton from '../../components/Button/FollowButton.vue';
+import { createBrowseHistory } from '../../api/BrowseHistory/BrowseHistoryApi';
+import { useUserStore } from '../../store/userPinia';
 import { useArtStore } from '../../store/artPinia';
 import { formatUTCtoLocal } from '../../utils/timeUtils';
 
 const route = useRoute();
+const userStore = useUserStore();
 const artStore = useArtStore();
 
 const artId = route.query.id;
@@ -28,6 +31,7 @@ onMounted(async () => {
     await artStore.fetchCurrentArticle(artId);
 
     document.title = currentArticle.value.artTitle;
+    createBrowHis();
 
     ifLoading.value = false;
 })
@@ -44,6 +48,15 @@ const handleEditor = () => {
 // 编辑完成
 const editComplete = () => {
     ifEdit.value = false;
+}
+
+// 创建浏览历史记录
+const createBrowHis = async () => {
+    const nowTime = new Date();
+    const result = await createBrowseHistory(userStore.user.userId, "article", artId, nowTime);
+    if (result.code != 200) {
+        ElMessage.error("创建浏览记录失败！");
+    }
 }
 
 </script>

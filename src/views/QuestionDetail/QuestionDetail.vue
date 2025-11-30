@@ -9,8 +9,10 @@ import ReviseDialog from './components/ReviseDialog.vue';
 
 import { useUserStore } from '../../store/userPinia';
 import { useQueStore } from '../../store/quePinia';
+import { createBrowseHistory } from '../../api/BrowseHistory/BrowseHistoryApi';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -35,11 +37,13 @@ onMounted(async () => {
     queStore.initDetail();
     // 获取数据
     await queStore.fetchCurrentQuestion(queId);
-    document.title = currentQuestion.value.queTitle;
 
     // 进入详情页自动增加话题浏览数
-    if (queStore.currentQuestion != null) {
+    // 添加用户浏览历史
+    if (currentQuestion.value != null) {
+        document.title = currentQuestion.value.queTitle;
         queStore.increaseQueBrowseNum(queId);
+        createBrowHis();
     }
 
     // 判断登录用户是否为作者
@@ -60,6 +64,15 @@ const handleEditor = (data) => {
 const handleIfAuthor = () => {
     if (userStore.user.userId === currentQuestion.value.queAuthorId) { // 是作者
         ifAuthor.value = true;
+    }
+}
+
+// 创建浏览历史记录
+const createBrowHis = async () => {
+    const nowTime = new Date();
+    const result = await createBrowseHistory(userStore.user.userId, "question", queId, nowTime);
+    if (result.code != 200) {
+        ElMessage.error("创建浏览记录失败！");
     }
 }
 
